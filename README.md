@@ -312,6 +312,24 @@ kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -f
 
 ```
 
+Using helm chart repo
+
+```
+helm repo add djkormo-adcs-issuer https://djkormo.github.io/adcs-issuer/
+
+helm repo update
+
+helm search repo adcs-issuer  --versions
+
+helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer \
+  --namespace cert-manager --values chart/adcs-issuser/values.yaml  --dry-run
+
+helm upgrade project-operator djkormo-adcs-issuer/adcs-issuer \
+  --namespace cert-manager --values chart/adcs-issuser/values.yaml
+
+helm uninstall adcs-issuer  --namespace  cert-manager  
+```
+
 
 ## License
 
