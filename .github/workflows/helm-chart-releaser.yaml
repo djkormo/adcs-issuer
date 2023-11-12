@@ -6,8 +6,8 @@ on:
       - main
       - master
     paths:
-      - 'chart/**.yaml'
-      - 'chart/**.yml'
+      - 'charts/**.yaml'
+      - 'charts/**.yml'
 
 jobs:
   release:
