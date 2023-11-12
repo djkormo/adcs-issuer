@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/Azure/go-ntlmssp"
 	"io/ioutil"
 	"net/http"
 	neturl "net/url"
@@ -14,6 +13,9 @@ import (
 	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
+
+	"github.com/Azure/go-ntlmssp"
+	"k8s.io/klog"
 )
 
 type NtlmCertsrv struct {
@@ -230,6 +232,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		"SaveCert":            {"yes"},
 		"CertificateTemplate": {template},
 	}
+
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
 
 	if err != nil {
@@ -237,8 +240,11 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		return certStatus, "", "", err
 	}
 	req.SetBasicAuth(s.username, s.password)
+	klog.V(5).Infof("Username as BasicAuth: \n %v ", s.username)
+
 	req.Header.Set("User-agent", "Mozilla")
 	req.Header.Set("Content-type", ct_urlenc)
+
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Sending request", "request", req)
 	}
@@ -251,27 +257,31 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		//log.Info("Sending request", "response Request.URL", res.Request.URL)
 		//log.Info("Sending request", "Status Request.URL", res.Status)
 	}
+
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", "", err
 	}
+
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Sending request", "response", res)
 	}
+
 	body, err := ioutil.ReadAll(res.Body)
 
 	log.Info("Body", "body", body)
 
 	if res.Header.Get("Content-type") == ct_pkix {
+		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
 		return Ready, string(body), "none", nil
 	}
-
 	if err != nil {
 		log.Error(err, "Cannot read ADCS Certserv response")
 		return certStatus, "", "", err
 	}
 
 	bodyString := string(body)
+
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Body", "body", bodyString)
 	}
@@ -312,6 +322,7 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 
 	// Check for newest renewal number
 	url := fmt.Sprintf("%s/%s", s.url, certcarc)
+	// klog.V(4).Infof("inside obtainCaCertificate: going to url: %v ", url)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
@@ -350,7 +361,11 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	req, _ = http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
+
 	res2, err := s.httpClient.Do(req)
+
+	// klog.V(4).Infof("Response Getting CAcert obtainingCaCertificate: %v ", res2)
+
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return "", err
@@ -369,6 +384,7 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 			log.Error(err, "Cannot read ADCS Certserv response")
 			return "", err
 		}
+		// klog.V(4).Infof("return body adcs certserv response: %v ", body)
 		return string(body), nil
 	}
 	return "", fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res2.Status, err.Error())

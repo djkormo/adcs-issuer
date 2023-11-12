@@ -36,3 +36,4 @@ minikube_downloads/
 adcs-sim
 *.crt
 *.key
+*-all.yaml

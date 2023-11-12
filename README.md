@@ -11,15 +11,37 @@ It supports NTLM authentication.
 
 
 
+### TODO 
+
+Check issues!!!
+
+
+1. Make helm chart for adcs-issuer
+
+2. Correct RBAC for cert-manager
+
+
+
+
+Build statuses:
+
 
 [![operator pipeline](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml)
 
+
 [![Code scanning - action](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml)
+
+
+[![Publish Docker image on Release](https://github.com/djkormo/adcs-issuer/actions/workflows/main.yml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/main.yml)
+
+
+[![Release helm charts](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml)
+
 
 ## Description
 
 ### Requirements
-ADCS Issuer has been tested with cert-manager v1.7.0 and currently supports CertificateRequest CRD API version v1 only.
+ADCS Issuer has been tested with cert-manager v1.9.x and currently supports CertificateRequest CRD API version v1 only.
 
 ## Configuration and usage
 
@@ -48,6 +70,7 @@ The `statusCheckInterval` indicates how often the status of the request should b
 The `retryInterval` says how long to wait before retrying requests that errored.
 
 The `credentialsRef.name` is name of a secret that stores user credentials used for NTLM authentication. The secret must be `Opaque` and contain `password` and `username` fields only e.g.:
+
 ```
 apiVersion: v1
 data:
@@ -59,7 +82,9 @@ metadata:
   namespace: <namespace>
 type: Opaque
 ```
+
 If cluster level issuer configuration is needed then ClusterAdcsUssuer can be defined like this:
+
 ```
 apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: ClusterAdcsIssuer
@@ -74,12 +99,14 @@ spec:
   url: <adcs-certice-url>
   templateName: <adcs-template-name>
 ```
+
 The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), must be defined in the namespace where the controller's pod is running, or in the namespace specified by the flag  `-clusterResourceNamespace` (default: `kube-system`).
 
 ### Requesting certificates
 
 To request a certificate with `AdcsIssuer` the standard `certificate.cert-manager.io` object needs to be created. The `issuerRef` must be set to point to `AdcsIssuer` or `ClusterAdcsIssuer` object
 from group `adcs.certmanager.csf.nokie.com` e.g.:
+
 ```
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -100,6 +127,7 @@ spec:
   - Your organization
   secretName: adcs-cert
 ```
+
 Cert-manager is responsible for creating the `Secret` with a key and `CertificateRequest` with proper CSR data.
 
 
@@ -109,6 +137,7 @@ The `AdcsRequest` object stores the ID of request assigned by the ADCS server as
 * **Ready** - the request has been successfully processed and the certificate is ready and stored in secret defined in the original `Certificate` object,
 * **Rejected** - the request was rejected by ADCS and will be re-tried unless the `Certificate` is updated,
 * **Errored**  - unrecoverable problem occured.
+
 
 ```
 apiVersion: adcs.certmanager.csf.nokia.com/v1
@@ -138,6 +167,7 @@ status:
 #### Auto-request certificate from ingress
 Add the following to an `Ingress` for cert-manager to auto-generate a
 `Certificate` using `Ingress` information with ingress-shim
+
 ```
 metadata:
   name: test-ingress
@@ -217,10 +247,22 @@ Unfortunately, there are no web services available for ADCS management only a DC
 and [MS-WSTEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wstep/4766a85d-0d18-4fa1-a51f-e5cb98b752ea))
 
 
-Installing cert manager 
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.0/cert-manager.yaml
+
+### Locally operations
 
 
+#### Installing cert manager 
+
+```
+
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.0/cert-manager.yaml
+
+```
+
+#### Working with operator
+
+
+```
 kustomize build config/crd > template.yaml
 echo "---" >> template.yaml
 kustomize build config/default >> template.yaml
@@ -233,7 +275,6 @@ kubectl apply -R -f manifests -n cert-manager
 
 kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
 
-
 make build IMG="docker.io/djkormo/adcs-issuer:dev"
 
 make docker-build docker-push IMG="docker.io/djkormo/adcs-issuer:dev"
@@ -242,6 +283,36 @@ docker build . -t docker.io/djkormo/adcs-issuer:dev
 
 docker login docker.io/djkormo
 docker push docker.io/djkormo/adcs-issuer:dev
+
+
+
+git tag 2.0.3
+git push origin --tags
+
+
+```
+
+### Helm chart
+
+Testing locally
+
+```
+
+
+helm lint chart/adcs-issuer
+
+helm template charts/adcs-issuer -n cert-manager --values charts/adcs-issuer/values.yaml
+
+helm template charts/adcs-issuer -n adcs-issuer --values charts/adcs-issuer/values.yaml > adcs-issuer-all.yaml
+
+kubectl -n cert-manager apply -f adcs-issuer-all.yaml 
+
+kubectl -n cert-manager rollout restart deploy adcs-issuer-controller-manager
+
+kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -f
+
+```
+
 
 ## License
 

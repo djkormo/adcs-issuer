@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -25,6 +26,7 @@ func TestParsingCaCertShouldReturnX509(t *testing.T) {
 	validX509Certificate, err := ioutil.ReadFile("testdata/x509.pem")
 	assert.NoError(t, err)
 	// act
+
 	parsedCaCert, err := parseCaCert(pkcs7Pem, log)
 
 	// assert
@@ -38,6 +40,7 @@ func TestIncorrectFormatPkcs(t *testing.T) {
 	assert.NoError(t, err)
 
 	// act
+
 	ca, err := parseCaCert(incorrectPKCS7Cert, log)
 
 	// assert
@@ -50,6 +53,7 @@ func TestEmptyPkcs(t *testing.T) {
 	emptyPKCS7 := []byte(``)
 
 	// act
+
 	ca, err := parseCaCert(emptyPKCS7, log)
 
 	// assert
@@ -62,6 +66,7 @@ func TestIncorrectCertFormat(t *testing.T) {
 	incorrectCertFormat := []byte(`This is not correct!`)
 
 	// act
+
 	ca, err := parseCaCert(incorrectCertFormat, log)
 
 	// assert
@@ -79,6 +84,7 @@ func TestParseCaCertCorrectPKCS7(t *testing.T) {
 	assert.NoError(t, err)
 
 	// act
+
 	ca, err := parseCaCert(rawPkcs7, log)
 
 	// assert
@@ -92,6 +98,7 @@ func TestCorrectX509Cert(t *testing.T) {
 	x509, err := ioutil.ReadFile("testdata/x509.pem")
 
 	// act
+
 	parsedCaCert, err := parseCaCert(x509, log)
 
 	// assert

@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "chart.fullname" . }}-cert-manager-controller-approve:adcs-certmanager-csf-nokia-com
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - cert-manager.io
+  resourceNames:
+  - adcsissuers.adcs.certmanager.csf.nokia.com/*
+  - clusteradcsissuers.adcs.certmanager.csf.nokia.com/*
+  resources:
+  - signers
+  verbs:
+  - approve
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "chart.fullname" . }}-cert-manager-controller-approve:adcs-certmanager-csf-nokia-com
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: '{{ include "chart.fullname" . }}-cert-manager-controller-approve:adcs-certmanager-csf-nokia-com'
+subjects:
+- kind: ServiceAccount
+  name: '{{ include "chart.fullname" . }}-cert-manager'
+  namespace: '{{ .Release.Namespace }}'

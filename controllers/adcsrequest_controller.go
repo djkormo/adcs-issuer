@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	core "k8s.io/api/core/v1"
+	"k8s.io/klog"
 
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -50,6 +51,9 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// your logic here
 	log.Info("Processing request")
+	if klog.V(3) {
+		klog.Infof("requesting to template: %v", r.IssuerFactory.AdcsTemplateName)
+	}
 
 	// Fetch the AdcsRequest resource being reconciled
 	ar := new(api.AdcsRequest)
@@ -94,6 +98,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		r.setStatus(ctx, ar)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.StatusCheckInterval}, nil
 	case api.Ready:
+
 		// Combine the certificates, as we need the intermediate certs in with the CA.
 		combinedCert := cert
 		if caCert != nil {
@@ -109,6 +114,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// CA cert is inside the cert above
 		// cr.Status.CA = caCert
 		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
+
 	case api.Rejected:
 		// This is a little hack for strange cert-manager behavior in case of failed request. Cert-manager automatically
 		// re-tries such requests (re-created CertificateRequest object) what doesn't make sense in case of rejection.

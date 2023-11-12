@@ -1,3 +1,4 @@
+
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
@@ -252,3 +253,4 @@ sim-install: sim
 	cp bin/adcs-sim /usr/local/bin
 	mkdir -p /usr/local/adcs-sim
 	cp -R test/adcs-sim/ca test/adcs-sim/templates /usr/local/adcs-sim
+
