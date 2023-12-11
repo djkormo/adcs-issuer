@@ -134,6 +134,98 @@ helm uninstall adcs-issuer  --namespace  cert-manager
 
 ```
 
+Create credentials for adcd
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: adcs-issuer-credentials
+  namespace: cert-manager # namespace of cert managera and adcs operator
+type: Opaque
+data:
+  password: REDACTED # Password
+  username: REDACTED # username
+
+```
+
+
+Deploy namespaced  object
+
+```yaml
+apiVersion: adcs.certmanager.csf.nokia.com/v1
+kind: AdcsIssuer
+metadata:
+  name: argocd-adcs-issuer
+  namespace: argocd # namespace with ingress objects
+spec:
+  caBundle: REDACTED # ca certificate
+  credentialsRef:
+    name: adcs-issuer-credentials # reference to kubernetes secret
+  statusCheckInterval: 5m
+  retryInterval: 5m
+  url: https://adcs-host/ # external host
+  templateName: adcsTemplate # external template 
+```
+
+or
+
+Deploy cluster scoped object
+
+```yaml
+apiVersion: adcs.certmanager.csf.nokia.com/v1
+kind: ClusterAdcsIssuer
+metadata:
+  name: adcs-cluster-issuer
+spec:
+  caBundle: REDACTED # ca certificate
+  credentialsRef:
+    name: adcs-issuer-credentials # secret with username and password
+  statusCheckInterval: 5m
+  retryInterval: 5m
+  url: https://adcs-host/ # external host
+  templateName:adcsTemplate # external template 
+
+```
+
+Add annotatioons for ingress object, here for argocd server
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/issuer: argocd-adcs-issuer # issuser name
+    cert-manager.io/issuer-kind: AdcsIssuer # ClusterAdcsIssuer or AdcsIssuer
+    cert-manager.io/issuer-group: adcs.certmanager.csf.nokia.com # api group, here adcs.certmanager.csf.nokia.com
+    cert-manager.io/duration: 17520h # 2 years
+    cert-manager.io/renew-before: 48h # renew 48 hour before
+
+  name: argo-cd-argocd-server
+  namespace: argocd
+ 
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: argocd.sample.host
+    http:
+      paths:
+      - backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
+        path: /(.*)
+        pathType: Prefix
+  tls:
+  - hosts:
+    - argocd.sample.host
+    secretName: argocd-tls-certificate # secret for storing certificate
+```
+
+
+
+
 
 ## License
 
