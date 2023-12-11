@@ -184,7 +184,7 @@ spec:
   statusCheckInterval: 5m
   retryInterval: 5m
   url: https://adcs-host/ # external host
-  templateName:adcsTemplate # external template 
+  templateName: adcsTemplate # external template 
 
 ```
 
@@ -225,6 +225,10 @@ spec:
 
 
 
+Check objects
+```bash
+kubectl -n argocd get certificate,certificaterequests
+```
 
 
 ## License
