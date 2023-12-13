@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   adcs-issuer:
   - apiVersion: v2
+    appVersion: 2.0.7
+    created: "2023-12-13T20:08:59.793622462Z"
+    description: ADCS issuser plugin for cert-manager
+    digest: 9974352d73718f903171c7bd756a851f33d2903b777cc691c4b55b76bce50e63
+    name: adcs-issuer
+    type: application
+    urls:
+    - https://github.com/djkormo/adcs-issuer/releases/download/adcs-issuer-2.0.7/adcs-issuer-2.0.7.tgz
+    version: 2.0.7
+  - apiVersion: v2
     appVersion: 2.0.6
     created: "2023-12-13T10:18:59.709626897Z"
     description: ADCS issuser plugin for cert-manager
@@ -31,4 +41,4 @@ entries:
     urls:
     - https://github.com/djkormo/adcs-issuer/releases/download/adcs-issuer-2.0.4/adcs-issuer-2.0.4.tgz
     version: 2.0.4
-generated: "2023-12-13T10:18:59.709640242Z"
+generated: "2023-12-13T20:08:59.79364313Z"
