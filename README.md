@@ -11,13 +11,6 @@ It supports NTLM authentication.
 
 
 
-### TODO 
-
-
-1. Correct RBAC for cert-manager
-
-
-
 Build statuses:
 
 
@@ -35,16 +28,17 @@ Build statuses:
 ## Description
 
 ### Requirements
-ADCS Issuer has been tested with cert-manager v1.9.x and currently supports CertificateRequest CRD API version v1 only.
-
+ADCS Issuer has been tested with cert-manager v1.9.x and v.12.x and currently supports CertificateRequest CRD API version v1 only.
 
 ### Locally operations
 
 #### Installing cert manager 
 
 ```
-
+# version 1.9.0
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.0/cert-manager.yaml
+# version 1.12.6
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.6/cert-manager.yaml
 
 ```
 
@@ -74,8 +68,7 @@ docker login docker.io/djkormo
 docker push docker.io/djkormo/adcs-issuer:dev
 
 
-
-git tag 2.0.4
+git tag 2.0.8
 git push origin --tags
 
 
@@ -104,7 +97,7 @@ kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -f
 
 Using helm chart repo via github repo
 
-```
+```bash
 # add helm repo
 helm repo add djkormo-adcs-issuer https://djkormo.github.io/adcs-issuer/
 
@@ -115,24 +108,86 @@ helm repo update djkormo-adcs-issuer
 helm search repo adcs-issuer  --versions
 
 # download values file for some version
-helm show values djkormo-adcs-issuer/adcs-issuer --version 2.0.4 > values.yaml
+helm show values djkormo-adcs-issuer/adcs-issuer --version 2.0.8 > values.yaml
 
 # test installation
-helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.0.4 \
+helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.0.8 \
   --namespace cert-manager --values values.yaml  --dry-run
 
 #  install
-helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.0.4 \
+helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.0.8 \
   --namespace cert-manager --values values.yaml  --dry-run
 
 # upgrade
-helm upgrade project-operator djkormo-adcs-issuer/adcs-issuer  --version 2.0.5 \
+helm upgrade project-operator djkormo-adcs-issuer/adcs-issuer  --version 2.0.8 \
   --namespace cert-manager --values values.yaml
 
 # uninstall 
 helm uninstall adcs-issuer  --namespace  cert-manager
 
 ```
+
+Example of values.yaml file for version 2.0.8 and above 
+
+```yaml
+adcs-issuer:
+  crd:
+    install: true
+
+  controllerManager:
+    manager:
+      image:
+        repository: djkormo/adcs-issuer
+        tag: 2.0.8
+      resources:
+        limits:
+          cpu: 100m
+          memory: 500Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+
+    rbac:
+      enabled: true
+      serviceAccountName: adcs-issuer # service account for rbac
+      certManagerNamespace: cert-manager # cert manager serviceaccount
+      certManagerServiceAccountName: cert-manager  # cert manager namespace
+
+
+    replicas: 1
+
+    environment:
+      KUBERNETES_CLUSTER_DOMAIN: cluster.local
+      ENABLE_WEBHOOKS: "false"
+      ENABLE_DEBUG: "false"
+    arguments:
+      enable-leader-election: "true"
+      cluster-resource-namespace: cert-manager # namespoace for cluster scoped resources, common secret
+      zap-log-level: 5
+      disable-approved-check: "false"
+
+    securityContext:
+      runAsUser: 1000
+
+    enabledWebHooks: false
+    enabledCaCerts: false
+    caCertsSecretName: ca-certificates
+  metricsService:
+    enabled: true
+    ports:
+    - name: https
+      port: 8443
+      targetPort: https
+    type: ClusterIP
+  webhookService:
+    ports:
+    - port: 443
+      targetPort: 9443
+    type: ClusterIP
+
+
+```
+
 
 Create credentials for adcd
 
