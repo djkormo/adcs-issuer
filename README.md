@@ -286,6 +286,212 @@ kubectl -n argocd get certificate,certificaterequests
 ```
 
 
+
+## Using adcs simulator
+
+Deploy this simulator
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adcs-sim-deployment
+  namespace: cert-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: adcs-sim
+  template:
+    metadata:
+      labels:
+        control-plane: adcs-sim
+    spec:
+      containers:
+      - args:
+        - --dns=adcs-sim-service.cert-manager.svc,adcs2.example.com 
+        - --ips=10.10.10.1,10.10.10.2
+        - --port=8443
+        command:
+        - /usr/local/adcs-sim/manager
+        image: djkormo/adcs-sim:0.0.5
+        imagePullPolicy: Always
+        env:
+        - name: ENABLE_DEBUG
+          value: "false"  
+        name: manager
+        volumeMounts:
+
+        # emptydirs for storing csr and cert files
+        - name: csr
+          mountPath: "/usr/local/adcs-sim/ca"
+
+        # ca cert 
+        - name: config-pem
+          mountPath: "/usr/local/adcs-sim/ca/root.pem"
+          subPath: root.pem
+          readOnly: true
+
+        # ca key
+        - name: config-key
+          mountPath: "/usr/local/adcs-sim/ca/root.key"
+          subPath: root.key
+          readOnly: true
+
+        ports:
+        - containerPort: 8443 # the same as --port=8443 in arguments
+          name: adcs-sim
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+
+      terminationGracePeriodSeconds: 10
+
+      volumes:
+
+        - name: csr
+          emptyDir:
+            sizeLimit: 50Mi 
+
+        - name: config-pem
+          configMap:
+            name: adcs-sim-configmap # configmap for storing ca cert
+
+        - name: config-key
+          configMap:
+            name: adcs-sim-configmap # configmap for storing ca key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adcs-sim-service
+  namespace: cert-manager
+spec:
+  ports:
+  - port: 8443
+    targetPort: 8443
+  selector:
+    control-plane: adcs-sim
+```
+
+
+Generate the private key of the root CA:
+
+```
+openssl genrsa -out root.pem 4096
+```
+
+Generate the self-signed root CA certificate:
+
+```
+openssl req -x509 -sha256 -new -nodes -key root.pem -days 3650 -out root.key -addext "subjectAltName=DNS:example.com,DNS:*.example.com,IP:10.0.0.1" \
+
+  -subj '/C=PL/ST=Warsaw/L=Mordor/O=ADCSSIM/OU=IT/CN=example.com'
+```
+
+Review the certificate:
+```
+openssl x509 -in root.key -text
+```
+
+
+Use your own ca cert and key. Recomended only for development purpose, you should convert configmap to secret if needed.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adcs-sim-configmap
+  namespace: cert-manager
+data:
+
+  root.pem: |
+    -----BEGIN CERTIFICATE-----
+    REDACTED
+    -----END CERTIFICATE-----
+
+ 
+  root.key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    REDACTED
+    -----END RSA PRIVATE KEY-----
+
+```
+
+Deploy credentials and configuration for adcs simulator
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: adcs-issuer-credentials
+  namespace: cert-manager # namespace of adcs operator
+type: Opaque
+data:
+  password: REDACTED # password
+  username: REDACTED # username
+---
+apiVersion: adcs.certmanager.csf.nokia.com/v1
+kind: ClusterAdcsIssuer
+metadata:
+  name: adcs-cluster-issuer-adcs-sim
+spec:
+  caBundle: REDACTED # ca bundle from adcs simulator
+  credentialsRef:
+    name: adcs-issuer-credentials # secret with username and password
+  statusCheckInterval: 1m
+  retryInterval: 1m
+  url: https://adcs-sim-service.cert-manager.svc:8443 # external host via kubernetes service
+  templateName: BasicSSLWebServer # external template 
+```
+
+
+Deploy sample certuficate
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+
+  name: adcs-sim-cert
+  namespace: cert-manager
+spec:
+  commonName: example.com
+  dnsNames:
+  - adcs1.example.com
+  - adcs2.example.com
+
+  issuerRef:
+    group: adcs.certmanager.csf.nokia.com # api group, here adcs.certmanager.csf.nokia.com
+    kind: ClusterAdcsIssuer # ClusterAdcsIssuer or AdcsIssuer
+    name: adcs-cluster-issuer-adcs-sim # issuser name
+
+  secretName: adcs-sim-secret # where to store certificate
+```
+
+Have fun
+
+```
+kubectl -n cert-manager get certificate,certificaterequest,adcsrequest
+```
+<pre>
+NAME                                                   READY   SECRET                              AGE
+certificate.cert-manager.io/adcs-sim-cert              True    adcs-sim-secret                     28m
+
+NAME                                                       APPROVED   DENIED   READY   ISSUER                         REQUESTOR                                         AGE
+certificaterequest.cert-manager.io/adcs-sim-cert-2v677     True                True    adcs-cluster-issuer-adcs-sim   system:serviceaccount:cert-manager:cert-manager   27m
+
+NAME                                                                 STATE
+adcsrequest.adcs.certmanager.csf.nokia.com/adcs-sim-cert-2v677       ready
+</pre>
+
+
+
 ## License
 
 This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).
