@@ -25,6 +25,9 @@ Build statuses:
 
 [![Release helm charts](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml)
 
+
+[![adcs-simulator pipeline](https://github.com/djkormo/adcs-issuer/actions/workflows/adcs-simulator.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/adcs-simulator.yaml)
+
 ## Description
 
 ### Requirements
