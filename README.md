@@ -1,14 +1,13 @@
 # ADCS Issuer
 
-ADCS Issuer is a [cert-manager's](https://github.com/jetstack/cert-manager) CertificateRequest controller that uses MS Active Directory Certificate Service to sign certificates 
-(see [this design document](https://github.com/jetstack/cert-manager/blob/master/design/20190708.certificate-request-crd.md) for details on CertificateRequest CRD). 
+ADCS Issuer is a [cert-manager's](https://github.com/cert-manager/cert-manager) CertificateRequest controller that uses MS Active Directory Certificate Service to sign certificates 
+(see [this design document](https://github.com/cert-manager/cert-manager/blob/master/design/20190708.certificate-request-crd.md) for details on CertificateRequest CRD). 
 
 ADCS provides HTTP GUI that can be normally used to request new certificates or see status of existing requests. 
 This implementation is simply a HTTP client that interacts with the ADCS server sending appropriately prepared HTTP requests and interpretting the server's HTTP responses
 (the approach inspired by [this Python ADCS client](https://github.com/magnuswatn/certsrv)).
 
 It supports NTLM authentication.
-
 
 
 Build statuses:
@@ -454,7 +453,7 @@ spec:
 ```
 
 
-Deploy sample certuficate
+Deploy sample certificate
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -497,4 +496,4 @@ adcsrequest.adcs.certmanager.csf.nokia.com/adcs-sim-cert-2v677       ready
 
 ## License
 
-This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).
+This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/djkormo/adcs-issuer/blob/master/LICENSE).
