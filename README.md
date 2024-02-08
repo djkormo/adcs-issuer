@@ -132,60 +132,60 @@ helm uninstall adcs-issuer  --namespace  cert-manager
 Example of values.yaml file for version 2.0.8 and above 
 
 ```yaml
-adcs-issuer:
-  crd:
-    install: true
+crd:
+  install: true
 
-  controllerManager:
-    manager:
-      image:
-        repository: djkormo/adcs-issuer
-        tag: 2.0.8
-      resources:
-        limits:
-          cpu: 100m
-          memory: 500Mi
-        requests:
-          cpu: 100m
-          memory: 100Mi
+controllerManager:
+  manager:
+    image:
+      repository: djkormo/adcs-issuer
+      tag: 2.0.8
+    resources:
+      limits:
+        cpu: 100m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
 
-    rbac:
-      enabled: true
-      serviceAccountName: adcs-issuer # service account for rbac
-      certManagerNamespace: cert-manager # cert manager serviceaccount
-      certManagerServiceAccountName: cert-manager  # cert manager namespace
-
-
-    replicas: 1
-
-    environment:
-      KUBERNETES_CLUSTER_DOMAIN: cluster.local
-      ENABLE_WEBHOOKS: "false"
-      ENABLE_DEBUG: "false"
-    arguments:
-      enable-leader-election: "true"
-      cluster-resource-namespace: cert-manager # namespoace for cluster scoped resources, common secret
-      zap-log-level: 5
-      disable-approved-check: "false"
-
-    securityContext:
-      runAsUser: 1000
-
-    enabledWebHooks: false
-    enabledCaCerts: false
-    caCertsSecretName: ca-certificates
-  metricsService:
+  rbac:
     enabled: true
-    ports:
-    - name: https
-      port: 8443
-      targetPort: https
-    type: ClusterIP
-  webhookService:
-    ports:
-    - port: 443
-      targetPort: 9443
-    type: ClusterIP
+    serviceAccountName: cert-manager # service account for rbac
+    certManagerNamespace: cert-manager # cert manager serviceaccount
+    certManagerServiceAccountName: cert-manager  # cert manager namespace
+
+
+  replicas: 1
+
+  environment:
+    KUBERNETES_CLUSTER_DOMAIN: cluster.local
+    ENABLE_WEBHOOKS: "false"
+    ENABLE_DEBUG: "false"
+  arguments:
+    enable-leader-election: "true"
+    cluster-resource-namespace: "cert-manager" # namespace for cluster scoped resources, common secret
+    zap-log-level: 5
+    disable-approved-check: "false"
+
+  securityContext:
+    runAsUser: 1000
+
+  enabledWebHooks: false
+  enabledCaCerts: false
+  caCertsSecretName: ca-certificates
+metricsService:
+  enabled: true
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  type: ClusterIP
+  
+webhookService:
+  ports:
+  - port: 443
+    targetPort: 9443
+  type: ClusterIP
 
 
 ```
