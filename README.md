@@ -34,14 +34,24 @@ ADCS Issuer has been tested with cert-manager v1.9.x and v.12.x and currently su
 
 ### Locally operations
 
-#### Installing cert manager 
-
+## install cert-manager 
+```console
+helm repo add jetstack https://charts.jetstack.io --force-update
 ```
-# version 1.9.0
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.0/cert-manager.yaml
-# version 1.12.6
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.6/cert-manager.yaml
-
+```console
+helm repo update
+```
+```console
+helm search repo cert-manager
+helm search repo cert-manager --versions | grep v1.
+```
+```console
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.12.6  \
+  --set installCRDs=true
 ```
 
 #### Working with operator
