@@ -200,6 +200,103 @@ webhookService:
 
 ```
 
+Example of values.yaml file for version 2.0.9 and above 
+
+```yaml
+crd:
+  install: true
+
+controllerManager:
+  manager:
+    image:
+      repository: djkormo/adcs-issuer
+      tag: 2.0.8
+    resources:
+      limits:
+        cpu: 100m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+
+  rbac:
+    enabled: true
+    serviceAccountName: adcs-issuer
+    certManagerNamespace: cert-manager
+    certManagerServiceAccountName: cert-manager 
+
+
+  replicas: 1
+
+  environment:
+    KUBERNETES_CLUSTER_DOMAIN: cluster.local
+    ENABLE_WEBHOOKS: "false"
+    ENABLE_DEBUG: "false"
+  arguments:
+    enable-leader-election: "true"
+    cluster-resource-namespace: adcs-issuer # must be the same as chart namespace
+    zap-log-level: 5
+    disable-approved-check: "false"
+
+  securityContext:
+    runAsUser: 1000
+
+  enabledWebHooks: false
+  enabledCaCerts: false
+  caCertsSecretName: ca-certificates
+metricsService:
+  enabled: true
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  type: ClusterIP
+webhookService:
+  ports:
+  - port: 443
+    targetPort: 9443
+  type: ClusterIP
+
+simulator:
+  enabled: true
+  clusterIssuserName: adcs-sim-adcsclusterissuer
+  deploymentName: adcs-sim-deployment
+  configMapName: adcs-sim-configmap
+  secretName: adcs-sim-secret
+  serviceName: adcs-sim-service 
+  image:
+    repository: djkormo/adcs-sim
+    tag: 0.0.5
+
+  environment:
+    ENABLE_DEBUG: "false"
+
+  arguments:
+      dns: adcs-sim-service.adcs-issuer.svc,adcs2.example.com 
+      ips: 10.10.10.1,10.10.10.2
+      port: 8443
+
+  containerPort: 8443
+  servicePort: 8443
+
+  resources:
+
+    limits:
+      cpu: 100m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi  
+
+  exampleCertificate:
+    enabled: true 
+    name: adcs-sim-certificate    
+
+```
+
+
+### Prepare your kubernetes resources:
+
 
 Create credentials for adcd
 
@@ -208,7 +305,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: adcs-issuer-credentials
-  namespace: cert-manager # namespace of cert managera and adcs operator
+  namespace: adcs-issuer # namespace of  adcs operator
 type: Opaque
 data:
   password: REDACTED # Password
@@ -298,17 +395,17 @@ kubectl -n argocd get certificate,certificaterequests
 ```
 
 
-
 ## Using adcs simulator
 
-Deploy this simulator
+Deploy this simulator. 
+Note! Using helm chart 2.0.9 and above you can install it using helm commands.
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: adcs-sim-deployment
-  namespace: cert-manager
+  namespace: adcs-issuer
 spec:
   replicas: 1
   selector:
@@ -382,7 +479,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: adcs-sim-service
-  namespace: cert-manager
+  namespace: adcs-issuer
 spec:
   ports:
   - port: 8443
@@ -419,7 +516,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: adcs-sim-configmap
-  namespace: cert-manager
+  namespace: adcs-issuer
 data:
 
   root.pem: |
@@ -442,7 +539,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: adcs-issuer-credentials
-  namespace: cert-manager # namespace of adcs operator
+  namespace: adcs-issuer # namespace of adcs operator
 type: Opaque
 data:
   password: REDACTED # password
@@ -471,7 +568,7 @@ kind: Certificate
 metadata:
 
   name: adcs-sim-cert
-  namespace: cert-manager
+  namespace: adcs-issuer
 spec:
   commonName: example.com
   dnsNames:
