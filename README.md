@@ -105,6 +105,99 @@ helm uninstall adcs-issuer  --namespace  cert-manager
 ```
 
 
+![Version: 2.1.1](https://img.shields.io/badge/Version-2.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.1.1](https://img.shields.io/badge/AppVersion-2.1.1-informational?style=flat-square)
+
+ADCS issuser plugin for cert-manager
+
+## Values
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| crd.install | bool | `true` |  |
+| controllerManager.manager.image.repository | string | `"djkormo/adcs-issuer"` |  |
+| controllerManager.manager.image.tag | string | `"2.1.1"` |  |
+| controllerManager.manager.resources.limits.cpu | string | `"100m"` |  |
+| controllerManager.manager.resources.limits.memory | string | `"500Mi"` |  |
+| controllerManager.manager.resources.requests.cpu | string | `"100m"` |  |
+| controllerManager.manager.resources.requests.memory | string | `"100Mi"` |  |
+| controllerManager.manager.livenessProbe.httpGet.path | string | `"/healthz"` |  |
+| controllerManager.manager.livenessProbe.httpGet.port | int | `8081` |  |
+| controllerManager.manager.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
+| controllerManager.manager.livenessProbe.timeoutSeconds | int | `10` |  |
+| controllerManager.manager.livenessProbe.periodSeconds | int | `10` |  |
+| controllerManager.manager.readinessProbe.httpGet.path | string | `"/readyz"` |  |
+| controllerManager.manager.readinessProbe.httpGet.port | int | `8081` |  |
+| controllerManager.manager.readinessProbe.httpGet.scheme | string | `"HTTP"` |  |
+| controllerManager.manager.readinessProbe.timeoutSeconds | int | `20` |  |
+| controllerManager.manager.readinessProbe.periodSeconds | int | `20` |  |
+| controllerManager.manager.readinessProbe.initialDelaySeconds | int | `10` |  |
+| controllerManager.rbac.enabled | bool | `true` |  |
+| controllerManager.rbac.serviceAccountName | string | `"adcs-issuer"` |  |
+| controllerManager.rbac.certManagerNamespace | string | `"cert-manager"` |  |
+| controllerManager.rbac.certManagerServiceAccountName | string | `"cert-manager"` |  |
+| controllerManager.replicas | int | `1` |  |
+| controllerManager.environment.KUBERNETES_CLUSTER_DOMAIN | string | `"cluster.local"` |  |
+| controllerManager.environment.ENABLE_WEBHOOKS | string | `"false"` |  |
+| controllerManager.environment.ENABLE_DEBUG | string | `"false"` |  |
+| controllerManager.arguments.enable-leader-election | string | `"true"` |  |
+| controllerManager.arguments.cluster-resource-namespace | string | `"adcs-issuer"` |  |
+| controllerManager.arguments.zap-log-level | int | `5` |  |
+| controllerManager.arguments.disable-approved-check | string | `"false"` |  |
+| controllerManager.securityContext.runAsUser | int | `1000` |  |
+| controllerManager.enabledWebHooks | bool | `false` |  |
+| controllerManager.enabledCaCerts | bool | `false` |  |
+| controllerManager.caCertsSecretName | string | `"ca-certificates"` |  |
+| metricsService.enabled | bool | `true` |  |
+| metricsService.ports[0].name | string | `"https"` |  |
+| metricsService.ports[0].port | int | `8443` |  |
+| metricsService.ports[0].targetPort | string | `"https"` |  |
+| metricsService.type | string | `"ClusterIP"` |  |
+| webhookService.ports[0].port | int | `443` |  |
+| webhookService.ports[0].targetPort | int | `9443` |  |
+| webhookService.type | string | `"ClusterIP"` |  |
+| nodeSelector | object | `{}` |  |
+| simulator.enabled | bool | `true` |  |
+| simulator.clusterIssuserName | string | `"adcs-sim-adcsclusterissuer"` |  |
+| simulator.deploymentName | string | `"adcs-sim-deployment"` |  |
+| simulator.configMapName | string | `"adcs-sim-configmap"` |  |
+| simulator.secretCertificateName | string | `"adcs-sim-certificate-secret"` |  |
+| simulator.secretName | string | `"adcs-sim-secret"` |  |
+| simulator.serviceName | string | `"adcs-sim-service"` |  |
+| simulator.image.repository | string | `"djkormo/adcs-sim"` |  |
+| simulator.image.tag | string | `"0.0.6"` |  |
+| simulator.environment.ENABLE_DEBUG | string | `"false"` |  |
+| simulator.arguments.dns | string | `"adcs-sim-service.adcs-issuer.svc,adcs2.example.com"` |  |
+| simulator.arguments.ips | string | `"10.10.10.1,10.10.10.2"` |  |
+| simulator.arguments.port | int | `8443` |  |
+| simulator.containerPort | int | `8443` |  |
+| simulator.servicePort | int | `8443` |  |
+| simulator.livenessProbe.httpGet.path | string | `"/healthz"` |  |
+| simulator.livenessProbe.httpGet.port | int | `8443` |  |
+| simulator.livenessProbe.httpGet.scheme | string | `"HTTPS"` |  |
+| simulator.livenessProbe.timeoutSeconds | int | `10` |  |
+| simulator.livenessProbe.periodSeconds | int | `10` |  |
+| simulator.readinessProbe.httpGet.path | string | `"/readyz"` |  |
+| simulator.readinessProbe.httpGet.port | int | `8443` |  |
+| simulator.readinessProbe.httpGet.scheme | string | `"HTTPS"` |  |
+| simulator.readinessProbe.timeoutSeconds | int | `20` |  |
+| simulator.readinessProbe.periodSeconds | int | `20` |  |
+| simulator.readinessProbe.initialDelaySeconds | int | `10` |  |
+| simulator.podSecurityContext.runAsUser | int | `1000` |  |
+| simulator.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
+| simulator.containerSecurityContext.readOnlyRootFilesystem | bool | `true` |  |
+| simulator.containerSecurityContext.capabilities.drop[0] | string | `"all"` |  |
+| simulator.resources.limits.cpu | string | `"100m"` |  |
+| simulator.resources.limits.memory | string | `"500Mi"` |  |
+| simulator.resources.requests.cpu | string | `"100m"` |  |
+| simulator.resources.requests.memory | string | `"100Mi"` |  |
+| simulator.exampleCertificate.enabled | bool | `true` |  |
+| simulator.exampleCertificate.name | string | `"adcs-sim-certificate"` |  |
+
+
+
+
+
+
 Example of values.yaml file for version 2.0.10 and above
 
 ```yaml
