@@ -54,37 +54,6 @@ helm install \
   --set installCRDs=true
 ```
 
-#### Working with operator
-
-
-```
-kustomize build config/crd > template.yaml
-echo "---" >> template.yaml
-kustomize build config/default >> template.yaml
-
-make dry-run 
-
-cat all-manifests.yaml | kubectl split-yaml -t "{{.kind}}/{{.name}}.yaml" -p manifests
-
-kubectl apply -R -f manifests -n cert-manager
-
-kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
-
-make build IMG="docker.io/djkormo/adcs-issuer:dev"
-
-make docker-build docker-push IMG="docker.io/djkormo/adcs-issuer:dev"
-
-docker build . -t docker.io/djkormo/adcs-issuer:dev
-
-docker login docker.io/djkormo
-docker push docker.io/djkormo/adcs-issuer:dev
-
-
-git tag 2.0.8
-git push origin --tags
-
-
-```
 
 ### Helm chart
 
@@ -139,160 +108,6 @@ helm uninstall adcs-issuer  --namespace  cert-manager
 
 ```
 
-Example of values.yaml file for version 2.0.8 and above 
-
-```yaml
-crd:
-  install: true
-
-controllerManager:
-  manager:
-    image:
-      repository: djkormo/adcs-issuer
-      tag: 2.0.8
-    resources:
-      limits:
-        cpu: 100m
-        memory: 500Mi
-      requests:
-        cpu: 100m
-        memory: 100Mi
-
-  rbac:
-    enabled: true
-    serviceAccountName: cert-manager # service account for rbac
-    certManagerNamespace: cert-manager # cert manager serviceaccount
-    certManagerServiceAccountName: cert-manager  # cert manager namespace
-
-
-  replicas: 1
-
-  environment:
-    KUBERNETES_CLUSTER_DOMAIN: cluster.local
-    ENABLE_WEBHOOKS: "false"
-    ENABLE_DEBUG: "false"
-  arguments:
-    enable-leader-election: "true"
-    cluster-resource-namespace: "cert-manager" # namespace for cluster scoped resources, common secret
-    zap-log-level: 5
-    disable-approved-check: "false"
-
-  securityContext:
-    runAsUser: 1000
-
-  enabledWebHooks: false
-  enabledCaCerts: false
-  caCertsSecretName: ca-certificates
-metricsService:
-  enabled: true
-  ports:
-  - name: https
-    port: 8443
-    targetPort: https
-  type: ClusterIP
-  
-webhookService:
-  ports:
-  - port: 443
-    targetPort: 9443
-  type: ClusterIP
-
-
-```
-
-Example of values.yaml file for version 2.0.9 and above 
-
-```yaml
-crd:
-  install: true
-
-controllerManager:
-  manager:
-    image:
-      repository: djkormo/adcs-issuer
-      tag: 2.0.8
-    resources:
-      limits:
-        cpu: 100m
-        memory: 500Mi
-      requests:
-        cpu: 100m
-        memory: 100Mi
-
-  rbac:
-    enabled: true
-    serviceAccountName: adcs-issuer
-    certManagerNamespace: cert-manager
-    certManagerServiceAccountName: cert-manager 
-
-
-  replicas: 1
-
-  environment:
-    KUBERNETES_CLUSTER_DOMAIN: cluster.local
-    ENABLE_WEBHOOKS: "false"
-    ENABLE_DEBUG: "false"
-  arguments:
-    enable-leader-election: "true"
-    cluster-resource-namespace: adcs-issuer # must be the same as chart namespace
-    zap-log-level: 5
-    disable-approved-check: "false"
-
-  securityContext:
-    runAsUser: 1000
-
-  enabledWebHooks: false
-  enabledCaCerts: false
-  caCertsSecretName: ca-certificates
-metricsService:
-  enabled: true
-  ports:
-  - name: https
-    port: 8443
-    targetPort: https
-  type: ClusterIP
-webhookService:
-  ports:
-  - port: 443
-    targetPort: 9443
-  type: ClusterIP
-
-simulator:
-  enabled: true
-  clusterIssuserName: adcs-sim-adcsclusterissuer
-  deploymentName: adcs-sim-deployment
-  configMapName: adcs-sim-configmap
-  secretName: adcs-sim-secret
-  serviceName: adcs-sim-service 
-  image:
-    repository: djkormo/adcs-sim
-    tag: 0.0.5
-
-  environment:
-    ENABLE_DEBUG: "false"
-
-  arguments:
-      dns: adcs-sim-service.adcs-issuer.svc,adcs2.example.com 
-      ips: 10.10.10.1,10.10.10.2
-      port: 8443
-
-  containerPort: 8443
-  servicePort: 8443
-
-  resources:
-
-    limits:
-      cpu: 100m
-      memory: 500Mi
-    requests:
-      cpu: 100m
-      memory: 100Mi  
-
-  exampleCertificate:
-    enabled: true 
-    name: adcs-sim-certificate    
-
-```
 
 Example of values.yaml file for version 2.0.10 and above
 
@@ -415,6 +230,155 @@ simulator:
 ```
 
 
+Example of values.yaml file for version 2.1.1 and above
+
+```yaml
+crd:
+  install: true
+
+# ADCS Issuer 
+
+controllerManager:
+
+  manager:
+    image:
+      repository: djkormo/adcs-issuer
+      tag: 2.1.1
+    resources:
+      limits:
+        cpu: 100m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+        scheme: HTTP
+      timeoutSeconds: 10
+      periodSeconds: 10
+
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8081 
+        scheme: HTTP
+      timeoutSeconds: 20
+      periodSeconds: 20
+      initialDelaySeconds: 10
+
+  rbac:
+    enabled: true
+    serviceAccountName: adcs-issuer
+    certManagerNamespace: cert-manager
+    certManagerServiceAccountName: cert-manager 
+
+
+  replicas: 1
+
+  environment:
+    KUBERNETES_CLUSTER_DOMAIN: cluster.local
+    ENABLE_WEBHOOKS: "false"
+    ENABLE_DEBUG: "false"
+  arguments:
+    enable-leader-election: "true"
+    cluster-resource-namespace: adcs-issuer # must be the same as chart namespace
+    zap-log-level: 5
+    disable-approved-check: "false"
+
+  securityContext:
+    runAsUser: 1000
+
+
+  enabledWebHooks: false
+  enabledCaCerts: false
+  caCertsSecretName: ca-certificates
+metricsService:
+  enabled: true
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  type: ClusterIP
+
+webhookService:
+  ports:
+  - port: 443
+    targetPort: 9443
+  type: ClusterIP
+
+nodeSelector: {}
+
+# ADCS Simulator 
+
+simulator:
+  enabled: false
+  clusterIssuserName: adcs-sim-adcsclusterissuer
+  deploymentName: adcs-sim-deployment
+  configMapName: adcs-sim-configmap
+  secretCertificateName: adcs-sim-certificate-secret
+  secretName: adcs-sim-secret
+  serviceName: adcs-sim-service 
+  image:
+    repository: djkormo/adcs-simulator
+    tag: 0.0.11
+
+  environment:
+    ENABLE_DEBUG: "false"
+
+  arguments:
+      dns: adcs-sim-service.adcs-issuer.svc,adcs2.example.com 
+      ips: 10.10.10.1,10.10.10.2
+      port: 8443
+
+  containerPort: 8443
+  servicePort: 8443
+
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8443 # the same as containerPort
+      scheme: HTTPS
+    timeoutSeconds: 10
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 8443 # the same as containerPort
+      scheme: HTTPS
+    timeoutSeconds: 20
+    periodSeconds: 20
+    initialDelaySeconds: 10
+
+  podSecurityContext:
+    runAsUser: 1000
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+      - all
+
+  resources:
+
+    limits:
+      cpu: 100m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi  
+
+  exampleCertificate:
+    enabled: true 
+    name: adcs-sim-certificate    
+
+
+```
+
+
 ### Prepare your kubernetes resources:
 
 
@@ -472,7 +436,7 @@ spec:
 
 ```
 
-Add annotatioons for ingress object, here for argocd server
+Add annotations for ingress object, here for argocd server
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -512,6 +476,40 @@ spec:
 Check objects
 ```bash
 kubectl -n argocd get certificate,certificaterequests
+```
+
+
+
+#### Working with operator
+
+
+```
+kustomize build config/crd > template.yaml
+echo "---" >> template.yaml
+kustomize build config/default >> template.yaml
+
+make dry-run 
+
+cat all-manifests.yaml | kubectl split-yaml -t "{{.kind}}/{{.name}}.yaml" -p manifests
+
+kubectl apply -R -f manifests -n cert-manager
+
+kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
+
+make build IMG="docker.io/djkormo/adcs-issuer:dev"
+
+make docker-build docker-push IMG="docker.io/djkormo/adcs-issuer:dev"
+
+docker build . -t docker.io/djkormo/adcs-issuer:dev
+
+docker login docker.io/djkormo
+docker push docker.io/djkormo/adcs-issuer:dev
+
+
+git tag 2.1.1
+git push origin --tags
+
+
 ```
 
 
@@ -607,6 +605,9 @@ spec:
   selector:
     control-plane: adcs-sim
 ```
+
+
+
 
 
 Generate the private key of the root CA:
