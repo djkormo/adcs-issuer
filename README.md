@@ -58,8 +58,6 @@ helm install \
 Testing locally
 
 ```
-
-
 helm lint chart/adcs-issuer
 
 helm template charts/adcs-issuer -n cert-manager --values charts/adcs-issuer/values.yaml
@@ -87,18 +85,18 @@ helm repo update djkormo-adcs-issuer
 helm search repo adcs-issuer  --versions
 
 # download values file for some version
-helm show values djkormo-adcs-issuer/adcs-issuer --version 2.0.8 > values.yaml
+helm show values djkormo-adcs-issuer/adcs-issuer --version 2.1.1 > values.yaml
 
 # test installation
-helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.0.8 \
+helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.1.1 \
   --namespace cert-manager --values values.yaml  --dry-run
 
 #  install
-helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.0.8 \
+helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.1.1 \
   --namespace cert-manager --values values.yaml  --dry-run
 
 # upgrade
-helm upgrade project-operator djkormo-adcs-issuer/adcs-issuer  --version 2.0.8 \
+helm upgrade project-operator djkormo-adcs-issuer/adcs-issuer  --version 2.1.1 \
   --namespace cert-manager --values values.yaml
 
 # uninstall 
@@ -117,7 +115,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer
-      tag: 2.0.8
+      tag: 2.0.10
     resources:
       limits:
         cpu: 100m
@@ -321,7 +319,7 @@ simulator:
   serviceName: adcs-sim-service 
   image:
     repository: djkormo/adcs-simulator
-    tag: 0.0.11
+    tag: 0.0.8
 
   environment:
     ENABLE_DEBUG: "false"
@@ -472,6 +470,7 @@ spec:
 
 
 Check objects
+
 ```bash
 kubectl -n argocd get certificate,certificaterequests
 ```
@@ -506,7 +505,6 @@ docker push docker.io/djkormo/adcs-issuer:dev
 
 git tag 2.1.1
 git push origin --tags
-
 
 ```
 
@@ -607,7 +605,6 @@ spec:
 
 
 
-
 Generate the private key of the root CA:
 
 ```
@@ -623,6 +620,7 @@ openssl req -x509 -sha256 -new -nodes -key root.pem -days 3650 -out root.key -ad
 ```
 
 Review the certificate:
+
 ```
 openssl x509 -in root.key -text
 ```
