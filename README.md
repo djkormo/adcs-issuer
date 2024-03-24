@@ -30,9 +30,15 @@ Build statuses:
 ### Requirements
 ADCS Issuer has been tested with cert-manager v1.9.x and v.12.x and currently supports CertificateRequest CRD API version v1 only.
 
-### Locally operations
 
-## install cert-manager 
+## Installation
+
+This controller is implemented using [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). Automatically generated Makefile contains targets needed for build and installation. 
+Generated CRD manifests are stored in `config/crd`. RBAC roles and bindings can be found in config/rbac. There's also a Make target to build controller's Docker image and
+store it in local docker repo (Docker must be installed).
+
+
+### install cert-manager 
 ```console
 helm repo add jetstack https://charts.jetstack.io --force-update
 ```
@@ -53,24 +59,9 @@ helm install \
 ```
 
 
-### Helm chart
 
-Testing locally
+### Install  adcs-issuer via helm chart
 
-```
-helm lint chart/adcs-issuer
-
-helm template charts/adcs-issuer -n cert-manager --values charts/adcs-issuer/values.yaml
-
-helm template charts/adcs-issuer -n adcs-issuer --values charts/adcs-issuer/values.yaml > adcs-issuer-all.yaml
-
-kubectl -n cert-manager apply -f adcs-issuer-all.yaml 
-
-kubectl -n cert-manager rollout restart deploy adcs-issuer-controller-manager
-
-kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -f
-
-```
 
 Using helm chart repo via github repo
 
@@ -89,27 +80,30 @@ helm show values djkormo-adcs-issuer/adcs-issuer --version 2.1.1 > values.yaml
 
 # test installation
 helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.1.1 \
-  --namespace cert-manager --values values.yaml  --dry-run
+  --namespace adcs-issuer --values values.yaml  --dry-run
 
 #  install
 helm install adcs-issuer  djkormo-adcs-issuer/adcs-issuer --version 2.1.1 \
-  --namespace cert-manager --values values.yaml  --dry-run
+  --namespace adcs-issuer --values values.yaml  --dry-run
 
 # upgrade
 helm upgrade project-operator djkormo-adcs-issuer/adcs-issuer  --version 2.1.1 \
-  --namespace cert-manager --values values.yaml
+  --namespace adcs-issuer --values values.yaml
 
 # uninstall 
-helm uninstall adcs-issuer  --namespace  cert-manager
+helm uninstall adcs-issuer  --namespace  adcs-issuer
 
 ```
+
+
+#### Helm chart parameters
 
 
 ![Version: 2.1.1](https://img.shields.io/badge/Version-2.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.1.1](https://img.shields.io/badge/AppVersion-2.1.1-informational?style=flat-square)
 
 ADCS issuser plugin for cert-manager
 
-## Values
+#### Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
@@ -470,8 +464,9 @@ simulator:
 
 ### Prepare your kubernetes resources:
 
+#### Credentials
 
-Create credentials for adcd
+Create credentials for adcs
 
 ```yaml
 apiVersion: v1
@@ -485,6 +480,11 @@ data:
   username: REDACTED # username
 
 ```
+
+
+#### Issuers
+
+The ADCS service data can be configured in `AdcsIssuer` or `ClusterAdcsIssuer` CRD objects e.g.:
 
 
 Deploy namespaced  object
@@ -525,7 +525,91 @@ spec:
 
 ```
 
+
+The `caBundle` parameter is BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
+
+The `statusCheckInterval` indicates how often the status of the request should be tested. Typically, it can take a few hours or even days before the certificate is issued.
+
+The `retryInterval` says how long to wait before retrying requests that errored.
+
+The `credentialsRef.name` is name of a secret that stores user credentials used for NTLM authentication. The secret must be `Opaque` and contain `password` and `username` fields only e.g.:
+
+
+The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), must be defined in the namespace where the controller's pod is running, or in the namespace specified by the flag  `-clusterResourceNamespace` (default: `kube-system`).
+
+
+
+To request a certificate with `AdcsIssuer` the standard `certificate.cert-manager.io` object needs to be created. The `issuerRef` must be set to point to `AdcsIssuer` or `ClusterAdcsIssuer` object
+from group `adcs.certmanager.csf.nokie.com` e.g.:
+
+
+#### Certificates
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+  name: adcs-cert
+  namespace: <namespace>
+spec:
+  commonName: example.com
+  dnsNames:
+  - service1.example.com
+  - service2.example.com
+  issuerRef:
+    group: adcs.certmanager.csf.nokia.com
+    kind: AdcsIssuer
+    name: test-adcs
+  organization:
+  - Your organization
+  secretName: adcs-cert
+```
+
+
+Cert-manager is responsible for creating the `Secret` with a key and `CertificateRequest` with proper CSR data.
+
+
+ADCS Issuer creates `AdcsRequest` CRD object that keep actual state of the processing. Its name is always the same as the corresponding `CertificateRequest` object (there is strict one-to-one mapping).
+The `AdcsRequest` object stores the ID of request assigned by the ADCS server as wall as the current status which can be one of:
+* **Pending** - the request has been sent to ADCS and is waiting for acceptance (status will be checked periodically),
+* **Ready** - the request has been successfully processed and the certificate is ready and stored in secret defined in the original `Certificate` object,
+* **Rejected** - the request was rejected by ADCS and will be re-tried unless the `Certificate` is updated,
+* **Errored**  - unrecoverable problem occured.
+
+
+```yaml
+apiVersion: adcs.certmanager.csf.nokia.com/v1
+kind: AdcsRequest
+metadata:
+  name: adcs-cert-3831834799
+  namespace: c1
+  ownerReferences:
+  - apiVersion: cert-manager.io/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: CertificateRequest
+    name: adcs-cert-3831834799 # the same as AdcsRequest name
+    uid: REDACTED
+  uid: REDACTED
+spec:
+  csr: REDACTED # base 64 encoded
+  issuerRef:
+    group: adcs.certmanager.csf.nokia.com
+    kind: AdcsIssuer
+    name: test-adcs
+status:
+  id: "18"
+  state: ready
+```
+
+
+#### Ingresses
+
+Using ingress objects
+
 Add annotations for ingress object, here for argocd server
+
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -535,7 +619,6 @@ metadata:
     cert-manager.io/issuer: argocd-adcs-issuer # issuser name
     cert-manager.io/issuer-kind: AdcsIssuer # ClusterAdcsIssuer or AdcsIssuer
     cert-manager.io/issuer-group: adcs.certmanager.csf.nokia.com # api group, here adcs.certmanager.csf.nokia.com
-    cert-manager.io/duration: 17520h # 2 years
     cert-manager.io/renew-before: 48h # renew 48 hour before
 
   name: argo-cd-argocd-server
@@ -562,12 +645,12 @@ spec:
 
 
 
+
 Check objects
 
 ```bash
 kubectl -n argocd get certificate,certificaterequests
 ```
-
 
 
 #### Working with operator
@@ -700,13 +783,13 @@ spec:
 
 Generate the private key of the root CA:
 
-```
+```console
 openssl genrsa -out root.pem 4096
 ```
 
 Generate the self-signed root CA certificate:
 
-```
+```console
 openssl req -x509 -sha256 -new -nodes -key root.pem -days 3650 -out root.key -addext "subjectAltName=DNS:example.com,DNS:*.example.com,IP:10.0.0.1" \
 
   -subj '/C=PL/ST=Warsaw/L=Mordor/O=ADCSSIM/OU=IT/CN=example.com'
@@ -714,7 +797,7 @@ openssl req -x509 -sha256 -new -nodes -key root.pem -days 3650 -out root.key -ad
 
 Review the certificate:
 
-```
+```console
 openssl x509 -in root.key -text
 ```
 
