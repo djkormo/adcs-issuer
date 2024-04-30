@@ -25,6 +25,23 @@ Build statuses:
 [![Release helm charts](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml)
 
 
+## General overview for use
+
+1. Deploy cert-manager
+1. Deploy the operator and CRD's
+1. Add a `Secret` with creds for ADCS
+1. Add/Configure an `AdcsIssuer` or `ClusterAdcsIssuer` referencing a particular ADCS server
+1. Request certificates from `cert-manager` using the `AdcsIssuer` or `ClusterAdcsIssuer`
+
+## Troubleshooting
+
+See request statuses:
+
+    kubectl -n demo-app-namespace get certificate,certificaterequest,adcsrequest,secret
+
+See log output:
+
+    kubectl -n adcs-issuer logs deploy/adcs-issuer-controller-manager -c manager
 
 ## Current documentation for this issuer 
 
@@ -58,16 +75,18 @@ metadata:
   name: test-adcs
   namespace: <namespace>
 spec:
-  caBundle: <base64-encoded-ca-certificate>
+  caBundle: <base64-encoded-pem-ca-certificate>
   credentialsRef:
     name: test-adcs-issuer-credentials
   statusCheckInterval: 6h
   retryInterval: 1h
-  url: <adcs-certice-url>
+  url: <adcs-certsrv-service-url>
   templateName: <adcs-template-name>
 ```
 
-The `caBundle` parameter is BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
+The `caBundle` parameter is BASE64-encoded PEM-encoded CA certificate which is used to trust communications with the ADCS server over HTTPS. It may not be the same certificate that will be used to sign your request.  It should start `LS0...` (not `MI...` since then that would represent a DER-encoded certificate).  Make sure to export the certificate as base-64 encoded then base64-encode the file containing `-----BEGIN CERTIFICATE-----`.
+
+The `url` parameter should be similar to `https://ca.domain.local/certsrv` or other base path to `certfnsh.asp`.  The `caBundle` will be used to verify the https communication channel.
 
 The `statusCheckInterval` indicates how often the status of the request should be tested. Typically, it can take a few hours or even days before the certificate is issued.
 
@@ -127,8 +146,8 @@ spec:
     group: adcs.certmanager.csf.nokia.com
     kind: AdcsIssuer
     name: test-adcs
-  organization:
-  - Your organization
+  subject:
+    organizations: [ "Your organization" ]
   secretName: adcs-cert
 ```
 
