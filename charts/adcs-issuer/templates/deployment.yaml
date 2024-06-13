@@ -77,7 +77,7 @@ spec:
           readOnlyRootFilesystem: true
           capabilities:
             drop:
-            - all
+            - ALL
 
 
         volumeMounts:
