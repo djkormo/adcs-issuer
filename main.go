@@ -124,8 +124,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	mgr.AddHealthzCheck("healthz", healthcheck.HealthCheck)
-	mgr.AddReadyzCheck("readyz", healthcheck.HealthCheck)
+	err = mgr.AddHealthzCheck("healthz", healthcheck.HealthCheck)
+	if err != nil {
+		setupLog.Error(err, "unable to start AddHealthzCheck")
+		os.Exit(1)
+	}
+
+	err = mgr.AddReadyzCheck("readyz", healthcheck.HealthCheck)
+	if err != nil {
+		setupLog.Error(err, "unable to start AddReadyzCheck")
+		os.Exit(1)
+	}
+
 	certificateRequestReconciler := &controllers.CertificateRequestReconciler{
 		Client:   mgr.GetClient(),
 		Recorder: mgr.GetEventRecorderFor("adcs-certificaterequests-controller"),

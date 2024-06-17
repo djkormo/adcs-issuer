@@ -91,11 +91,20 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Get the original CertificateRequest to set result in
 	cr, err := r.CertificateRequestController.GetCertificateRequest(ctx, req.NamespacedName)
+	if err != nil {
+		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+	}
+
 	switch ar.Status.State {
 	case api.Pending:
 		// Check again later
 		log.Info(fmt.Sprintf("Pending request will be re-tried in %v", issuer.StatusCheckInterval))
-		r.setStatus(ctx, ar)
+		err = r.setStatus(ctx, ar)
+		if err != nil {
+			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		}
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.StatusCheckInterval}, nil
 	case api.Ready:
 
@@ -113,18 +122,36 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 		// CA cert is inside the cert above
 		// cr.Status.CA = caCert
-		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
+		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
+		if err != nil {
+			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		}
 
 	case api.Rejected:
 		// This is a little hack for strange cert-manager behavior in case of failed request. Cert-manager automatically
 		// re-tries such requests (re-created CertificateRequest object) what doesn't make sense in case of rejection.
 		// We keep the Reason 'Pending' to prevent from re-trying while the actual status is in the Status Condition's Message field.
 		// TODO: change it when cert-manager handles this better.
-		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "ADCS request rejected")
+		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "ADCS request rejected")
+		if err != nil {
+			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		}
+
 	case api.Errored:
-		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonFailed, "ADCS request errored")
+		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonFailed, "ADCS request errored")
+		if err != nil {
+			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		}
 	}
-	r.setStatus(ctx, ar)
+
+	err = r.setStatus(ctx, ar)
+	if err != nil {
+		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+	}
 
 	return ctrl.Result{}, nil
 }

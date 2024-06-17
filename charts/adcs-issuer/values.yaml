@@ -8,7 +8,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer
-      tag: 2.1.0
+      tag: 2.1.2
     resources:
       limits:
         cpu: 100m
@@ -79,7 +79,7 @@ nodeSelector: {}
 # ADCS Simulator 
 
 simulator:
-  enabled: true
+  enabled: false
   clusterIssuserName: adcs-sim-adcsclusterissuer
   deploymentName: adcs-sim-deployment
   configMapName: adcs-sim-configmap
@@ -125,7 +125,7 @@ simulator:
     readOnlyRootFilesystem: true
     capabilities:
       drop:
-      - all
+      - ALL
 
   resources:
 

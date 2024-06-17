@@ -161,7 +161,11 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "Processing ADCS request")
+
+	err = r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "Processing ADCS request")
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	log.V(4).Info("setstatus", "ctx", ctx, "cr", &cr)
 

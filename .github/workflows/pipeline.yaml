@@ -1,13 +1,13 @@
 name: operator pipeline
-
-on:
-  push:
-    paths:
-      - 'api/**.go'
-      - 'config/**.go'
-      - 'controllers/**.go'
-      - '**.go'
-      - 'Dockerfile'
+  on:
+    workflow_dispatch:
+    push:
+      paths:
+        - 'api/**.go'
+        - 'config/**.go'
+        - 'controllers/**.go'
+        - '**.go'
+        - 'Dockerfile'
 
 
 jobs:

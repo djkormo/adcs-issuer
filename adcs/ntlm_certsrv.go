@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	neturl "net/url"
 	"os"
@@ -19,10 +19,10 @@ import (
 )
 
 type NtlmCertsrv struct {
-	url        string
-	username   string
-	password   string
-	ca         string
+	url      string
+	username string
+	password string
+	//ca         string
 	httpClient *http.Client
 }
 
@@ -142,10 +142,10 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 	defer res.Body.Close()
 
 	if res.StatusCode == http.StatusOK {
-		switch ct := strings.Split(res.Header.Get(http.CanonicalHeaderKey("content-type")), ";"); ct[0] {
+		switch ct := strings.Split(res.Header.Get("content-type"), ";"); ct[0] {
 		case ct_html:
 			// Denied or pending
-			body, err := ioutil.ReadAll(res.Body)
+			body, err := io.ReadAll(res.Body)
 			if err != nil {
 				log.Error(err, "Cannot read ADCS Certserv response")
 				return certStatus, "", id, err
@@ -192,7 +192,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 
 		case ct_pkix:
 			// Certificate
-			cert, err := ioutil.ReadAll(res.Body)
+			cert, err := io.ReadAll(res.Body)
 			if err != nil {
 				log.Error(err, "Cannot read ADCS Certserv response")
 				return certStatus, "", id, err
@@ -267,7 +267,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		log.Info("Sending request", "response", res)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 
 	log.Info("Body", "body", body)
 
@@ -341,7 +341,7 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 		return "", err
 	}
 	defer res1.Body.Close()
-	body, err := ioutil.ReadAll(res1.Body)
+	body, err := io.ReadAll(res1.Body)
 	if err != nil {
 		log.Error(err, "Cannot read ADCS Certserv response")
 		return "", err
@@ -373,13 +373,13 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	defer res2.Body.Close()
 
 	if res2.StatusCode == http.StatusOK {
-		ct := res2.Header.Get(http.CanonicalHeaderKey("content-type"))
+		ct := res2.Header.Get("content-type")
 		if expectedContentType != ct {
 			err = errors.New("Unexpected content type")
 			log.Error(err, err.Error(), "content type", ct)
 			return "", err
 		}
-		body, err := ioutil.ReadAll(res2.Body)
+		body, err := io.ReadAll(res2.Body)
 		if err != nil {
 			log.Error(err, "Cannot read ADCS Certserv response")
 			return "", err

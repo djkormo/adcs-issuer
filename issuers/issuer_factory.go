@@ -64,7 +64,7 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 
 	caCertPool := x509.NewCertPool()
 	ok := caCertPool.AppendCertsFromPEM(certs)
-	if ok == false {
+	if !ok {
 		return nil, fmt.Errorf("error loading ADCS CA bundle")
 	}
 
@@ -117,7 +117,7 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 
 	caCertPool := x509.NewCertPool()
 	ok := caCertPool.AppendCertsFromPEM(certs)
-	if ok == false {
+	if !ok {
 		return nil, fmt.Errorf("error loading ADCS CA bundle")
 	}
 
