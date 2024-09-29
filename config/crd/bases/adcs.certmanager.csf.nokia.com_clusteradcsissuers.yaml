@@ -45,6 +45,12 @@ spec:
                   the ADCS server.
                 format: byte
                 type: string
+              connectionTimeout:
+                default: 30s
+                description: |-
+                  Timeout for connection (in time.ParseDuration() format)
+                  Default 30s .
+                type: string
               credentialsRef:
                 description: |-
                   CredentialsRef is a reference to a Secret containing the username and
@@ -57,11 +63,19 @@ spec:
                 required:
                 - name
                 type: object
+              insecureSkipVerify:
+                default: false
+                description: Ommitting  ADCS cacert verification
+                type: boolean
               retryInterval:
                 description: |-
                   How often to retry in case of communication errors (in time.ParseDuration() format)
                   Default 1 hour.
                 type: string
+              skipNTLM:
+                default: false
+                description: Ommitting  NTLM Support
+                type: boolean
               statusCheckInterval:
                 description: |-
                   How often to check for request status in the server (in time.ParseDuration() format)

@@ -33,8 +33,12 @@ minikube_downloads/
 *.logs
 *.tar.gz
 adcs-sim
+*.cer
 *.crt
 *.key
 *-all.yaml
 *.exe
 adcs-issuer
+*.logs
+install-examples/certificates/*/*
+install-examples/secrets/adcs-credentials.yaml

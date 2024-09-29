@@ -23,6 +23,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // AdcsIssuerSpec defines the desired state of AdcsIssuer
+
 type AdcsIssuerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -54,6 +55,22 @@ type AdcsIssuerSpec struct {
 	// Defaults to the what is specified in main.go or as an cli option.
 	// +optional
 	TemplateName string `json:"templateName,omitempty"`
+
+	// Ommitting  ADCS cacert verification
+	// +optional
+	//+kubebuilder:default:=false
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
+	// Ommitting  NTLM Support
+	// +optional
+	//+kubebuilder:default:=false
+	SkipNTLM bool `json:"skipNTLM,omitempty"`
+
+	// Timeout for connection (in time.ParseDuration() format)
+	// Default 30s .
+	// +optional
+	//+kubebuilder:default:="30s"
+	ConnectionTimeout string `json:"connectionTimeout,omitempty"`
 }
 
 // AdcsIssuerStatus defines the observed state of AdcsIssuer

@@ -54,6 +54,22 @@ type ClusterAdcsIssuerSpec struct {
 	// Defaults to the what is specified in main.go or as an cli option.
 	// +optional
 	TemplateName string `json:"templateName,omitempty"`
+
+	// Ommitting  ADCS cacert verification
+	// +optional
+	//+kubebuilder:default:=false
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
+	// Ommitting  NTLM Support
+	// +optional
+	//+kubebuilder:default:=false
+	SkipNTLM bool `json:"skipNTLM,omitempty"`
+
+	// Timeout for connection (in time.ParseDuration() format)
+	// Default 30s .
+	// +optional
+	//+kubebuilder:default:="30s"
+	ConnectionTimeout string `json:"connectionTimeout,omitempty"`
 }
 
 // ClusterAdcsIssuerStatus defines the observed state of ClusterAdcsIssuer

@@ -37,13 +37,18 @@ spec:
           metadata:
             type: object
           spec:
-            description: AdcsIssuerSpec defines the desired state of AdcsIssuer
             properties:
               caBundle:
                 description: |-
                   CABundle is a PEM encoded TLS certifiate to use to verify connections to
                   the ADCS server.
                 format: byte
+                type: string
+              connectionTimeout:
+                default: 30s
+                description: |-
+                  Timeout for connection (in time.ParseDuration() format)
+                  Default 30s .
                 type: string
               credentialsRef:
                 description: |-
@@ -57,11 +62,19 @@ spec:
                 required:
                 - name
                 type: object
+              insecureSkipVerify:
+                default: false
+                description: Ommitting  ADCS cacert verification
+                type: boolean
               retryInterval:
                 description: |-
                   How often to retry in case of communication errors (in time.ParseDuration() format)
                   Default 1 hour.
                 type: string
+              skipNTLM:
+                default: false
+                description: Ommitting  NTLM Support
+                type: boolean
               statusCheckInterval:
                 description: |-
                   How often to check for request status in the server (in time.ParseDuration() format)

@@ -18,10 +18,10 @@ package controllers
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-logr/logr"
 	core "k8s.io/api/core/v1"
 	"k8s.io/klog"
+	"time"
 
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,7 +32,21 @@ import (
 
 	api "github.com/nokia/adcs-issuer/api/v1"
 	"github.com/nokia/adcs-issuer/issuers"
+	corev1 "k8s.io/api/core/v1"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	globals "github.com/nokia/adcs-issuer/globals"
+	sig_controller "sigs.k8s.io/controller-runtime/pkg/controller"
 )
+
+// default values
+var check_interval time.Duration = 5 * time.Minute
+
+//var retry_interval time.Duration = 5 * time.Minute
+//var timeout_duration time.Duration = 30 * time.Second
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
 type AdcsRequestReconciler struct {
@@ -41,6 +55,7 @@ type AdcsRequestReconciler struct {
 	IssuerFactory                issuers.IssuerFactory
 	Recorder                     record.EventRecorder
 	CertificateRequestController *CertificateRequestReconciler
+	Tracer                       trace.Tracer
 }
 
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests,verbs=get;list;watch;create;update;patch;delete
@@ -48,6 +63,13 @@ type AdcsRequestReconciler struct {
 
 func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx).WithValues("adcsrequest", req.NamespacedName)
+
+	ctx, span := r.Tracer.Start(context.Background(), "AdcsRequestReconciler")
+	span.AddEvent("AdcsRequestReconciler start",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
+	defer span.End()
 
 	// your logic here
 	log.Info("Processing request")
@@ -76,6 +98,14 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	span.AddEvent("AdcsRequestReconciler details", trace.WithAttributes(
+		attribute.String("CertID", ar.Status.Id),
+		attribute.String("State", string(ar.Status.State)),
+		attribute.String("Reason", ar.Status.Reason),
+		attribute.String("CSR", string(ar.Spec.CSRPEM)),
+		attribute.String("name", req.Name),
+		attribute.String("namespace", req.Namespace)))
+
 	if log.V(3).Enabled() {
 		log.V(3).Info("Running request", "template", issuer.AdcsTemplateName)
 	}
@@ -86,6 +116,18 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// We don't change the request status and just put it back on the queue
 		// to re-try later.
 		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+
+		span.AddEvent("AdcsRequestReconciler Failed request will be re-tried", trace.WithAttributes(
+			attribute.String("CertID", ar.Status.Id),
+			attribute.String("State", string(ar.Status.State)),
+			attribute.String("Reason", ar.Status.Reason),
+			attribute.String("CSR", string(ar.Spec.CSRPEM)),
+			attribute.String("Error", fmt.Sprint(err)),
+			attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
+		span.SetStatus(codes.Error, fmt.Sprint(err))
+
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
 	}
 
@@ -143,6 +185,18 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonFailed, "ADCS request errored")
 		if err != nil {
 			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
+
+			span.AddEvent("AdcsRequestReconciler Failed request will be re-tried", trace.WithAttributes(
+				attribute.String("CertID", ar.Status.Id),
+				attribute.String("State", string(ar.Status.State)),
+				attribute.String("Reason", ar.Status.Reason),
+				attribute.String("CSR", string(ar.Spec.CSRPEM)),
+				attribute.String("Error", fmt.Sprint(err)),
+				attribute.String("name", req.Name),
+				attribute.String("namespace", req.Namespace)))
+
+			span.SetStatus(codes.Error, fmt.Sprint(err))
+
 			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
 		}
 	}
@@ -153,7 +207,11 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
 	}
 
-	return ctrl.Result{}, nil
+	span.AddEvent("AdcsRequestReconciler end",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
+	return ctrl.Result{RequeueAfter: check_interval}, nil //requeue after check_interval
 }
 
 func (r *AdcsRequestReconciler) setStatus(ctx context.Context, ar *api.AdcsRequest) error {
@@ -171,5 +229,11 @@ func (r *AdcsRequestReconciler) setStatus(ctx context.Context, ar *api.AdcsReque
 func (r *AdcsRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&api.AdcsRequest{}).
+		WithOptions(sig_controller.Options{MaxConcurrentReconciles: globals.MaxConcurrentReconciles}).
 		Complete(r)
+}
+
+func (r *AdcsRequestReconciler) GetExternalResourcesStatus(ctx context.Context, cr *api.AdcsRequest, caBundle []byte,
+	url string, username string, password string, token string, certID int32, serialNumber string, insecureSkipVerify bool, licenseKey string, issuerSpec *api.AdcsIssuerSpec, secret corev1.Secret) (int, error) {
+	return 0, nil
 }

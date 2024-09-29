@@ -23,12 +23,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
+
+	"go.opentelemetry.io/otel/attribute"
+	//"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	globals "github.com/nokia/adcs-issuer/globals"
+	sig_controller "sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 // ClusterAdcsIssuerReconciler reconciles a ClusterAdcsIssuer object
 type ClusterAdcsIssuerReconciler struct {
 	client.Client
-	Log logr.Logger
+	Log    logr.Logger
+	Tracer trace.Tracer
 }
 
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=clusteradcsissuers,verbs=get;list;watch;create;update;patch;delete
@@ -37,6 +45,12 @@ type ClusterAdcsIssuerReconciler struct {
 func (r *ClusterAdcsIssuerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("clusteradcsissuer", req.NamespacedName)
 
+	ctx, span := r.Tracer.Start(ctx, "ClusterAdcsIssuerReconciler")
+	span.AddEvent("ClusterAdcsIssuerReconciler start",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
+	defer span.End()
 	// your logic here
 
 	// Fetch the ClusterAdcsIssuer resource being reconciled
@@ -50,11 +64,24 @@ func (r *ClusterAdcsIssuerReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 	log.Info("Registered cluster issuer")
 
+	span.AddEvent("ClusterAdcsIssuerReconciler details", trace.WithAttributes(
+		attribute.String("URL", issuer.Spec.URL),
+		attribute.String("TemplateName", issuer.Spec.TemplateName),
+		attribute.String("StatusCheckInterval", issuer.Spec.StatusCheckInterval),
+		attribute.String("ConnectionTimeout", issuer.Spec.ConnectionTimeout),
+		attribute.String("name", req.Name),
+		attribute.String("namespace", req.Namespace)))
+
+	span.AddEvent("ClusterAdcsIssuerReconciler end",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
 	return ctrl.Result{}, nil
 }
 
 func (r *ClusterAdcsIssuerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&adcsv1.ClusterAdcsIssuer{}).
+		WithOptions(sig_controller.Options{MaxConcurrentReconciles: globals.MaxConcurrentReconciles}).
 		Complete(r)
 }
