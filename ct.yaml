@@ -1,0 +1,9 @@
+# See https://github.com/helm/chart-testing#configuration
+remote: origin
+target-branch: master
+chart-dirs:
+  - charts/adcs-issuer
+chart-repos:
+  - adcs-issuer-issuer=https://djkormo.github.io/adcs-issuer/
+  - cert-manager=https://charts.jetstack.io
+helm-extra-args: --timeout 200s
