@@ -14,7 +14,29 @@ spec:
     singular: adcsissuer
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.templateName
+      name: TemplateName
+      type: string
+    - jsonPath: .spec.url
+      name: URL
+      type: string
+    - jsonPath: .spec.connectionTimeout
+      name: ConnectionTimeout
+      priority: 1
+      type: string
+    - jsonPath: .spec.insecureSkipVerify
+      name: InsecureSkipVerify
+      priority: 1
+      type: boolean
+    - jsonPath: .spec.skipNTLM
+      name: SkipNTLM
+      priority: 1
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: AdcsIssuer is the Schema for the adcsissuers API

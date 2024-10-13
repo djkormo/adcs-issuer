@@ -81,6 +81,12 @@ type ClusterAdcsIssuerStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=clusteradcsissuers,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="TemplateName",type=string,JSONPath=`.spec.templateName`
+// +kubebuilder:printcolumn:name="URL",type=string,JSONPath=`.spec.url`
+// +kubebuilder:printcolumn:name="ConnectionTimeout",type=string,priority=1,JSONPath=`.spec.connectionTimeout`
+// +kubebuilder:printcolumn:name="InsecureSkipVerify",type=boolean,priority=1,JSONPath=`.spec.insecureSkipVerify`
+// +kubebuilder:printcolumn:name="SkipNTLM",type=boolean,priority=1,JSONPath=`.spec.skipNTLM`
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // ClusterAdcsIssuer is the Schema for the clusteradcsissuers API
 type ClusterAdcsIssuer struct {
