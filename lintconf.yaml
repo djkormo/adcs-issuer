@@ -40,3 +40,4 @@ rules:
   trailing-spaces: false # was true
   truthy:
     level: warning
+
