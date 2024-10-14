@@ -42,12 +42,13 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         
       - name: Setting up kubeconfig ENV for Github Action
+        id: get_kubeconfig_data
         run: echo ::set-output name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
         
       - name: deploy cert-manager to cluster
         uses: wahyd4/kubectl-helm-action@master
-        #env:
-        #  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        env:
+          KUBE_CONFIG_DATA: ${{ steps.get_kubeconfig_data.outputs.KUBE_CONFIG_DATA }}
         with:
         
          args: |
