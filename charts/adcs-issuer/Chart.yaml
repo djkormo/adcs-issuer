@@ -30,3 +30,11 @@ maintainers: # (optional)
   - name: djkormo
     email: djkormo@gmail.com
     url: https://djkormo.github.io/adcs-issuer/
+
+
+dependencies:
+  - name: cert-manager
+    alias: cert-manager
+    version: ~v1.15.1
+    repository: https://charts.jetstack.io
+    condition: cert-manager.enabled    
