@@ -7,4 +7,3 @@ chart-repos:
   - adcs-issuer=https://djkormo.github.io/adcs-issuer/
   - cert-manager=https://charts.jetstack.io
 helm-extra-args: --timeout 180s
-
