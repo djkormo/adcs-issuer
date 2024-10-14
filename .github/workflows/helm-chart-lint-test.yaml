@@ -39,7 +39,12 @@ jobs:
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.10.0
+          
         if: steps.list-changed.outputs.changed == 'true'
+
+      - run: |
+          kubectl cluster-info
+          kubectl get nodes
         
       - name: Setting up kubeconfig ENV for Github Action
         id: get_kubeconfig_data
