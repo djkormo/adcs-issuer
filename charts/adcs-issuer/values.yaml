@@ -1,6 +1,6 @@
 cert-manager: 
   enabled: true # to install cert-manager as a subchart 
-  namespace: cert-manager
+  namespace: default
 
 # @section CRDs
 # Whether to install Custom Resource Definitions (CRDs).
