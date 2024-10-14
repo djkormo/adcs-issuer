@@ -53,16 +53,16 @@ jobs:
         id: get_kubeconfig_data
         run: echo ::set-output name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
         
-      - name: deploy cert-manager to cluster
-        uses: wahyd4/kubectl-helm-action@master
-        env:
-          KUBE_CONFIG_DATA: ${{ steps.get_kubeconfig_data.outputs.KUBE_CONFIG_DATA }}
-        with:
-        
-         args: |
-          helm repo add jetstack https://charts.jetstack.io --force-update
-          kubectl cluster-info --context kind-chart-testing --kubeconfig /tmp/config
-          helm upgrade --kubeconfig /tmp/config --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
+    #  - name: deploy cert-manager to cluster
+    #    uses: wahyd4/kubectl-helm-action@master
+    #    env:
+    #      KUBE_CONFIG_DATA: ${{ steps.get_kubeconfig_data.outputs.KUBE_CONFIG_DATA }}
+    #    with:
+    #    
+    #     args: |
+    #      helm repo add jetstack https://charts.jetstack.io --force-update
+    #      kubectl cluster-info --context kind-chart-testing --kubeconfig /tmp/config
+    #      helm upgrade --kubeconfig /tmp/config --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
 
       - name: Run chart-testing (install)
         run: ct install --config ct.yaml --namespace default
