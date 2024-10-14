@@ -44,7 +44,7 @@ jobs:
 
       - run: |
           kubectl cluster-info 
-          kubectl get nodes -v =6
+          kubectl get nodes -v=6
         
       - name: Setting up kubeconfig ENV for Github Action
         id: get_kubeconfig_data
