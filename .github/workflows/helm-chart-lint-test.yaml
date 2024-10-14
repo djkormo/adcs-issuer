@@ -42,4 +42,4 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --config ct.yaml  --upgrade 
+        run: ct install --config ct.yaml  --upgrade --namespace default
