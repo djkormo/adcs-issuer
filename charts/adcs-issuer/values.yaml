@@ -1,3 +1,7 @@
+cert-manager: 
+  enabled: false # to install cert-manager as a subchart 
+  namespace: default
+
 # @section CRDs
 # Whether to install Custom Resource Definitions (CRDs).
 crd:
@@ -260,5 +264,5 @@ simulator:
   # @section Example Certificate
   # Configuration for an example certificate used by the simulator.
   exampleCertificate:
-    enabled: true                             # Enable or disable the example certificate.
+    enabled: false                             # Enable or disable the example certificate.
     name: adcs-sim-certificate                # Name of the example certificate.

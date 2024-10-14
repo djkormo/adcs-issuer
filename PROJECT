@@ -37,7 +37,7 @@ resources:
 
 - api:
     crdVersion: v1
-    namespaced: true
+    namespaced: false
   controller: true
   domain: certmanager.csf.nokia.com
   group: adcs
