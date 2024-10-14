@@ -45,6 +45,9 @@ jobs:
       - run: |
           kubectl cluster-info 
           kubectl get nodes -v=6
+          helm version 
+          helm repo add jetstack https://charts.jetstack.io --force-update
+          helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
         
       - name: Setting up kubeconfig ENV for Github Action
         id: get_kubeconfig_data
