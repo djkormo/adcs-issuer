@@ -43,8 +43,8 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - run: |
-          kubectl cluster-info dump
-          kubectl get nodes -o wide
+          kubectl cluster-info 
+          kubectl get nodes -v =6
         
       - name: Setting up kubeconfig ENV for Github Action
         id: get_kubeconfig_data
