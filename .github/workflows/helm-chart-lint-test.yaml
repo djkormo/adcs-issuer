@@ -40,11 +40,16 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.10.0
         if: steps.list-changed.outputs.changed == 'true'
+        
+      - name: Setting up kubeconfig ENV for Github Action
+        run: echo ::set-env name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
 
       - name: deploy cert-manager to cluster
         uses: wahyd4/kubectl-helm-action@master
-  
+        #env:
+        #  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
+        
          args: |
           helm repo add jetstack https://charts.jetstack.io --force-update
           helm upgrade  --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
