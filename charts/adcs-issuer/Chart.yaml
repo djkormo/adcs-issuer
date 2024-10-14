@@ -24,3 +24,9 @@ sources:
   - https://github.com/djkormo/adcs-issuer
   - https://djkormo.github.io/adcs-issuer/
 kubeVersion: ">=1.16.0"
+
+
+maintainers: # (optional)
+  - name: djkormo
+    email: djkormo@gmail.com
+    url: https://djkormo.github.io/adcs-issuer/
