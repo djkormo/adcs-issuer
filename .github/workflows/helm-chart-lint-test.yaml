@@ -53,8 +53,8 @@ jobs:
         
          args: |
           helm repo add jetstack https://charts.jetstack.io --force-update
-          kubectl cluster-info --context kind-chart-testing --kubeconfig ~/.kube/config
-          helm upgrade --kubeconfig ~/.kube/config --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
+          kubectl cluster-info --context kind-chart-testing --kubeconfig /tmp/config
+          helm upgrade --kubeconfig /tmp/config --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
 
       - name: Run chart-testing (install)
         run: ct install --config ct.yaml --namespace default
