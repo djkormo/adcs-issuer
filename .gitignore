@@ -42,3 +42,4 @@ adcs-issuer
 *.logs
 install-examples/certificates/*/*
 install-examples/secrets/adcs-credentials.yaml
+kubeconfig
