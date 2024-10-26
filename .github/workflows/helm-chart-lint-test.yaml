@@ -55,6 +55,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - run: |
+          echo "Install cert-manager and so on ..."
           kubectl cluster-info 
           kubectl get nodes -v=6
           helm version 
@@ -75,11 +76,11 @@ jobs:
         continue-on-error: true
         run: |
           pwd 
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.27 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.28 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.29 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.30 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.31 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.27.0 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.28.0 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.29.0 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.30.0 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.31.0 -o wide -
       - name: Run chart-testing (install)
         continue-on-error: true
         run: ct install --config ct.yaml  
