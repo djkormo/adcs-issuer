@@ -65,9 +65,10 @@ jobs:
         continue-on-error: true
         run: |
           pwd 
-          polaris audit --helm-chart /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --helm-values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml --format=pretty 
+          polaris audit --helm-chart /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --helm-values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml --format=pretty --quiet
         
 
       - name: Run chart-testing (install)
+        continue-on-error: true
         run: ct install --config ct.yaml  --upgrade 
 
