@@ -1,0 +1,13 @@
+{{- if .Values.controllerManager.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "chart.fullname" . }}-controller-manager
+  namespace: {{ .Release.Name }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "chart.selectorLabels" . | nindent 8 }}
+
+{{- end }}       

@@ -7,8 +7,21 @@ cert-manager:
 crd:
   install: true
 
+openshift:
+  enabled: false # to use permission SCC on Openshift
+  anyuid: true # add permission for anyuid SCC on Openshift
+
+
 # @section ADCS Issuer Controller Manager
 controllerManager:
+
+  networkPolicy:
+    enabled: false
+
+  podDisruptionBudget:
+    enabled: false
+
+
 
   # @section Image
   # Image settings for the ADCS Issuer manager.
@@ -58,7 +71,7 @@ controllerManager:
 
   # @section Replicas
   # Number of replicas for the controller manager deployment.
-  replicas: 1
+  replicas: 2
 
   # @section Environment Variables
   # Environment variables for the controller manager.
@@ -139,6 +152,11 @@ webhookService:
 # @section Node Selector
 # Node selector configuration for the controller manager pods.
 nodeSelector: {}
+
+podPriorityClass:
+  enabled: false
+  name: adcs-issuer 
+  value: 1000  
 
 # @section ADCS Simulator
 # Configuration for the ADCS Simulator.
