@@ -56,7 +56,7 @@ jobs:
           helm repo add jetstack https://charts.jetstack.io --force-update
           helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
           helm repo add fairwinds-stable https://charts.fairwinds.com/stable --force-update
-          helm upgrade --install polaris fairwinds-stable/polaris --namespace demo --create-namespace --set webhook.enable=true --set dashboard.enable=false
+          helm upgrade --install polaris fairwinds-stable/polaris --namespace demo --create-namespace --set webhook.enable=false --set dashboard.enable=false
         
 
       - name: Use command polatis
