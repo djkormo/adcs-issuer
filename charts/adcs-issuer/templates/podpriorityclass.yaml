@@ -8,5 +8,4 @@ value: {{ .Values.podPriorityClass.value }}
 globalDefault: false
 preemptionPolicy: PreemptLowerPriority
 description: "Priority class for adcs-issuer applications."
-
 {{- end }}
