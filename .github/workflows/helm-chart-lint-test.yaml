@@ -75,8 +75,11 @@ jobs:
         continue-on-error: true
         run: |
           pwd 
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect -o wide -
-      
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.27 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.28 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.29 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.30 -o wide -
+          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --against-version 1.31 -o wide -
       - name: Run chart-testing (install)
         continue-on-error: true
         run: ct install --config ct.yaml  
