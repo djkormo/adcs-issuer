@@ -59,6 +59,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         with:
           config: .github/configs/kind-config.yaml
+          cluster_name: adcs-cluster
 
       - run: |
           echo "Install cert-manager and so on ..."
