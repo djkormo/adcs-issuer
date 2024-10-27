@@ -52,7 +52,7 @@ jobs:
         run: |
           pwd 
           printenv
-          ct lint --config ct.yaml --lint-conf lintconf.yaml --chart-yaml-schema chart_schema.yaml --debug 
+          ct lint --config ./.github/ct/ct.yaml --lint-conf ./.github/ct/lintconf.yaml --chart-yaml-schema ./.github/ct/chart_schema.yaml --debug 
 
       - name: Create kind cluster
         continue-on-error: true
@@ -75,18 +75,18 @@ jobs:
         continue-on-error: true
         run: |
           pwd 
-          polaris audit --helm-chart /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --helm-values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml --format=pretty --quiet --only-show-failed-tests
+          polaris audit --helm-chart ${GITHUB_WORKSPACE}/charts/adcs-issuer  --helm-values ${GITHUB_WORKSPACE}/charts/adcs-issuer/values.yaml --format=pretty --quiet --only-show-failed-tests
         
       - name: Use pluto for checking helm chart manifests
     
         continue-on-error: true
         run: |
           pwd 
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.27.0 -v 2 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.28.0 -v 2 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.29.0 -v 2 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.30.0 -v 2 -o wide -
-          helm template /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer --values /home/runner/work/adcs-issuer/adcs-issuer/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.31.0 -v 2 -o wide -
+          helm template ${GITHUB_WORKSPACE}/charts/adcs-issuer --values ${GITHUB_WORKSPACE}/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.27.0 -v 2 -o wide -
+          helm template ${GITHUB_WORKSPACE}/charts/adcs-issuer --values ${GITHUB_WORKSPACE}/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.28.0 -v 2 -o wide -
+          helm template ${GITHUB_WORKSPACE}/charts/adcs-issuer --values ${GITHUB_WORKSPACE}/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.29.0 -v 2 -o wide -
+          helm template ${GITHUB_WORKSPACE}/charts/adcs-issuer --values ${GITHUB_WORKSPACE}/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.30.0 -v 2 -o wide -
+          helm template ${GITHUB_WORKSPACE}/charts/adcs-issuer --values ${GITHUB_WORKSPACE}/charts/adcs-issuer/values.yaml | pluto detect --target-versions k8s=v1.31.0 -v 2 -o wide -
 
       - name: Run chart-testing (install)
         continue-on-error: true
