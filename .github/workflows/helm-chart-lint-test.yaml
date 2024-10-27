@@ -90,5 +90,5 @@ jobs:
 
       - name: Run chart-testing (install)
         continue-on-error: true
-        run: ct install --config ct.yaml  
+        run: ct install --config ./.github/ct/ct.yaml 
 
