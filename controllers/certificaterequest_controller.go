@@ -32,6 +32,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog"
+
+	"go.opentelemetry.io/otel/attribute"
+	//"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	globals "github.com/nokia/adcs-issuer/globals"
+	sig_controller "sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
@@ -41,6 +48,7 @@ type CertificateRequestReconciler struct {
 
 	Clock                  clock.Clock
 	CheckApprovedCondition bool
+	Tracer                 trace.Tracer
 }
 
 var (
@@ -53,6 +61,13 @@ var (
 
 func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx, "certificaterequest", req.NamespacedName)
+
+	ctx, span := r.Tracer.Start(ctx, "CertificateRequestReconciler")
+	span.AddEvent("CertificateRequestReconciler start",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
+	defer span.End()
 
 	// your logic here
 
@@ -169,6 +184,10 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	log.V(4).Info("setstatus", "ctx", ctx, "cr", &cr)
 
+	span.AddEvent("CertificateRequestReconciler end",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
 	return ctrl.Result{}, nil
 }
 
@@ -190,6 +209,7 @@ func (r *CertificateRequestReconciler) createAdcsRequest(ctx context.Context, cm
 func (r *CertificateRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cmapi.CertificateRequest{}).
+		WithOptions(sig_controller.Options{MaxConcurrentReconciles: globals.MaxConcurrentReconciles}).
 		Complete(r)
 }
 

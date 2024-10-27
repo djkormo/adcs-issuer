@@ -118,9 +118,12 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
  * - ADCS Request ID
  * - Error
  */
-func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error) {
+func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, string, string, error) {
 	log := log.Log.WithName("GetExistingCertificate")
 	var certStatus AdcsResponseStatus = Unknown
+
+	var validFrom string = ""
+	var validTo string = ""
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
 	if os.Getenv("ENABLE_DEBUG") == "true" {
@@ -137,7 +140,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
-		return certStatus, "", id, err
+		return certStatus, "", id, validFrom, validTo, err
 	}
 	defer res.Body.Close()
 
@@ -148,16 +151,18 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 			body, err := io.ReadAll(res.Body)
 			if err != nil {
 				log.Error(err, "Cannot read ADCS Certserv response")
-				return certStatus, "", id, err
+				return certStatus, "", id, validFrom, validTo, err
 			}
 			bodyString := string(body)
 			dispositionMessage := "unknown"
 			exp := regexp.MustCompile(`Disposition message:[^\t]+\t\t([^\r\n]+)`)
 			found := exp.FindStringSubmatch(bodyString)
+			log.Info("Response body for GetExistingCertificate", res.Body)
 			if len(found) > 1 {
 				dispositionMessage = found[1]
 				expPending := regexp.MustCompile(`.*Taken Under Submission*.`)
 				expRejected := regexp.MustCompile(`.*Denied by*.`)
+				log.Info("Response body for GetExistingCertificate", res.Body)
 				switch true {
 				case expPending.MatchString(bodyString):
 					certStatus = Pending
@@ -176,6 +181,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 					disp = found[0]
 				}
 				err = fmt.Errorf("disposition message unknown: %s", disp)
+				log.Info("Response body for GetExistingCertificate", disp)
 				log.Error(err, "Unknown error with ADCS")
 			}
 
@@ -188,23 +194,23 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 				log.Info("Last status unknown.")
 				log.V(5).Info("Last status unknown.")
 			}
-			return certStatus, dispositionMessage + lastStatusMessage, id, err
+			return certStatus, dispositionMessage + lastStatusMessage, id, validFrom, validTo, err
 
 		case ct_pkix:
 			// Certificate
 			cert, err := io.ReadAll(res.Body)
 			if err != nil {
 				log.Error(err, "Cannot read ADCS Certserv response")
-				return certStatus, "", id, err
+				return certStatus, "", validFrom, validTo, id, err
 			}
-			return Ready, string(cert), id, nil
+			return Ready, string(cert), id, validFrom, validTo, nil
 		default:
 			err = fmt.Errorf("unexpected content type %s:", ct)
 			log.Error(err, "Unexpected content type")
-			return certStatus, "", id, err
+			return certStatus, "", id, validFrom, validTo, err
 		}
 	}
-	return certStatus, "", id, fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res.Status, err.Error())
+	return certStatus, "", id, validFrom, validTo, fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res.Status, err.Error())
 
 }
 
@@ -215,9 +221,11 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
  * - ADCS Request ID (if known)
  * - Error
  */
-func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
+func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, string, string, error) {
 	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
 	var certStatus AdcsResponseStatus = Unknown
+	var validFrom string = ""
+	var validTo string = ""
 
 	log.V(1).Info("Starting certificate request")
 
@@ -237,7 +245,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	if err != nil {
 		log.Error(err, "Cannot create request")
-		return certStatus, "", "", err
+		return certStatus, "", "", "", "", err
 	}
 	req.SetBasicAuth(s.username, s.password)
 	klog.V(5).Infof("Username as BasicAuth: \n %v ", s.username)
@@ -260,7 +268,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
-		return certStatus, "", "", err
+		return certStatus, "", "", "", "", err
 	}
 
 	if os.Getenv("ENABLE_DEBUG") == "true" {
@@ -273,11 +281,11 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	if res.Header.Get("Content-type") == ct_pkix {
 		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
-		return Ready, string(body), "none", nil
+		return Ready, string(body), "none", "", "", nil
 	}
 	if err != nil {
 		log.Error(err, "Cannot read ADCS Certserv response")
-		return certStatus, "", "", err
+		return certStatus, "", "", validFrom, validTo, err
 	}
 
 	bodyString := string(body)
@@ -310,7 +318,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 			err := errors.New(errorString)
 			// TODO
 			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
-			return certStatus, "", "", fmt.Errorf(errorString)
+			return certStatus, "", "", validFrom, validTo, fmt.Errorf(errorString)
 		}
 	}
 

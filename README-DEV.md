@@ -218,3 +218,132 @@ Usefull command for testing
   kubectl -n cert-manager rollout restart deploy/adcs-issuer-controller-manager
   kubectl -n cert-manager rollout restart deploy/adcs-sim-deployment
 
+
+
+
+polaris audit --helm-chart ./charts/adcs-issuer --helm-values ./charts/adcs-issuer/values.yaml --format=pretty 
+
+```console
+Polaris audited Path /tmp/3545659651 at 2024-10-26T16:25:36+02:00
+    Nodes: 0 | Namespaces: 0 | Controllers: 1
+    Final score: 92
+
+RoleBinding release-name-adcs-issuer-leader-election-rolebinding in namespace default
+    rolebindingClusterAdminClusterRole   🎉 Success
+        Security - The RoleBinding does not reference the default cluster-admin ClusterRole or one with wildcard permissions
+    rolebindingClusterAdminRole          🎉 Success
+        Security - The RoleBinding does not reference a Role with wildcard permissions
+    rolebindingClusterRolePodExecAttach  🎉 Success
+        Security - The RoleBinding does not reference a ClusterRole allowing pods/exec or pods/attach
+    rolebindingRolePodExecAttach         🎉 Success
+        Security - The RoleBinding does not reference a Role allowing Pod exec or attach
+
+Service release-name-adcs-issuer-controller-manager-metrics-service in namespace default
+
+ServiceAccount adcs-issuer in namespace default
+
+CustomResourceDefinition adcsissuers.adcs.certmanager.csf.nokia.com
+
+CustomResourceDefinition adcsrequests.adcs.certmanager.csf.nokia.com
+
+CustomResourceDefinition clusteradcsissuers.adcs.certmanager.csf.nokia.com
+
+ClusterRole release-name-adcs-issuer-cert-manager-controller-approve-adcs-certmanager-csf-nokia-com
+    clusterrolePodExecAttach             🎉 Success
+        Security - The ClusterRole does not allow pods/exec or pods/attach
+
+ClusterRole release-name-adcs-issuer-manager-role
+    clusterrolePodExecAttach             🎉 Success
+        Security - The ClusterRole does not allow pods/exec or pods/attach
+
+ClusterRole release-name-adcs-issuer-proxy-role
+    clusterrolePodExecAttach             🎉 Success
+        Security - The ClusterRole does not allow pods/exec or pods/attach
+
+ClusterRoleBinding release-name-adcs-issuer-cert-manager-controller-approve-adcs-certmanager-csf-nokia-com
+    clusterrolebindingClusterAdmin       🎉 Success
+        Security - The ClusterRoleBinding does not reference the default cluster-admin ClusterRole or one with wildcard permissions
+    clusterrolebindingPodExecAttach      🎉 Success
+        Security - The ClusterRoleBinding does not reference a ClusterRole allowing pods/exec or pods/attach
+
+ClusterRoleBinding release-name-adcs-issuer-manager-rolebinding
+    clusterrolebindingClusterAdmin       🎉 Success
+        Security - The ClusterRoleBinding does not reference the default cluster-admin ClusterRole or one with wildcard permissions
+    clusterrolebindingPodExecAttach      🎉 Success
+        Security - The ClusterRoleBinding does not reference a ClusterRole allowing pods/exec or pods/attach
+
+ClusterRoleBinding release-name-adcs-issuer-proxy-rolebinding
+    clusterrolebindingClusterAdmin       🎉 Success
+        Security - The ClusterRoleBinding does not reference the default cluster-admin ClusterRole or one with wildcard permissions
+    clusterrolebindingPodExecAttach      🎉 Success
+        Security - The ClusterRoleBinding does not reference a ClusterRole allowing pods/exec or pods/attach
+
+Deployment release-name-adcs-issuer-controller-manager in namespace default
+    deploymentMissingReplicas            😬 Warning
+        Reliability - Only one replica is scheduled
+    metadataAndInstanceMismatched        😬 Warning
+        Reliability - Label app.kubernetes.io/instance must match metadata.name
+    missingPodDisruptionBudget           😬 Warning
+        Reliability - Should have a PodDisruptionBudget
+    pdbMinAvailableGreaterThanHPAMinReplicas 🎉 Success
+        Reliability - PDB and HPA are correctly configured
+    hostIPCSet                           🎉 Success
+        Security - Host IPC is not configured
+    hostNetworkSet                       🎉 Success
+        Security - Host network is not configured
+    hostPIDSet                           🎉 Success
+        Security - Host PID is not configured
+    missingNetworkPolicy                 😬 Warning
+        Security - A NetworkPolicy should match pod labels and contain applied egress and ingress rules
+    priorityClassNotSet                  😬 Warning
+        Reliability - Priority class should be set
+    topologySpreadConstraint             🎉 Success
+        Reliability - Pod has a valid topology spread constraint
+    automountServiceAccountToken         😬 Warning
+        Security - The ServiceAccount will be automounted
+  Container manager
+    hostPortSet                          🎉 Success
+        Security - Host port is not configured
+    memoryLimitsMissing                  🎉 Success
+        Efficiency - Memory limits are set
+    insecureCapabilities                 🎉 Success
+        Security - Container does not have any insecure capabilities
+    livenessProbeMissing                 🎉 Success
+        Reliability - Liveness probe is configured
+    memoryRequestsMissing                🎉 Success
+        Efficiency - Memory requests are set
+    notReadOnlyRootFilesystem            🎉 Success
+        Security - Filesystem is read only
+    readinessProbeMissing                🎉 Success
+        Reliability - Readiness probe is configured
+    sensitiveContainerEnvVar             🎉 Success
+        Security - The container does not set potentially sensitive environment variables
+    cpuLimitsMissing                     🎉 Success
+        Efficiency - CPU limits are set
+    dangerousCapabilities                🎉 Success
+        Security - Container does not have any dangerous capabilities
+    linuxHardening                       🎉 Success
+        Security - One of AppArmor, Seccomp, SELinux, or dropping Linux Capabilities are used to restrict containers using unwanted privileges
+    tagNotSpecified                      🎉 Success
+        Reliability - Image tag is specified
+    cpuRequestsMissing                   🎉 Success
+        Efficiency - CPU requests are set
+    privilegeEscalationAllowed           🎉 Success
+        Security - Privilege escalation not allowed
+    pullPolicyNotAlways                  🎉 Success
+        Reliability - Image pull policy is "Always"
+    runAsPrivileged                      🎉 Success
+        Security - Not running as privileged
+    runAsRootAllowed                     🎉 Success
+        Security - Is not allowed to run as root
+
+Role release-name-adcs-issuer-leader-election-role in namespace default
+    rolePodExecAttach                    🎉 Success
+        Security - The Role does not allow pods/exec or pods/attach
+
+
+
+🚀 Upload your Polaris findings to Fairwinds Insights to see remediation advice, add teammates, integrate with Slack or Jira, and more:
+
+❯ polaris audit --helm-chart ./charts/adcs-issuer --helm-values ./charts/adcs-issuer/values.yaml --format=pretty --upload-insights --cluster-name=my-cluster
+```

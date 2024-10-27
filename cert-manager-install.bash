@@ -1,10 +1,13 @@
-helm repo add jetstack https://charts.jetstack.io
+helm repo add jetstack https://charts.jetstack.io --force-update
 
-helm repo update
+helm search repo cert-manager
 
-helm install \
+helm search repo cert-manager --versions
+
+helm upgrade --install \
   cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --version v1.9.1 \
-  --set installCRDs=true
+    --namespace cert-manager \
+    --create-namespace \
+    --version v1.14.7 \
+    --set enableCertificateOwnerRef=true \
+    --set installCRDs=true

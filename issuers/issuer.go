@@ -39,6 +39,9 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 	var desc string
 	var id string
 	var err error
+
+	validFrom := ""
+	validTo := ""
 	if ar.Status.State != api.Unknown {
 		// Of all the statuses only Pending requires processing.
 		// All others are final
@@ -47,17 +50,22 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 			if ar.Status.Id == "" {
 				return nil, nil, fmt.Errorf("adcs id not set")
 			}
-			adcsResponseStatus, desc, id, err = i.certServ.GetExistingCertificate(ar.Status.Id)
+			adcsResponseStatus, desc, id, validFrom, validTo, err = i.certServ.GetExistingCertificate(ar.Status.Id)
+
+			if log.V(5).Enabled() {
+				log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id, "validFrom", validFrom, "validTo", validTo)
+
+			}
 		} else {
 			// Nothing to do
 			return nil, nil, nil
 		}
 	} else {
 		// New request
-		adcsResponseStatus, desc, id, err = i.certServ.RequestCertificate(string(ar.Spec.CSRPEM), i.AdcsTemplateName)
+		adcsResponseStatus, desc, id, validFrom, validTo, err = i.certServ.RequestCertificate(string(ar.Spec.CSRPEM), i.AdcsTemplateName)
 
 		if log.V(5).Enabled() {
-			log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id)
+			log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id, "validFrom", validFrom, "validTo", validTo)
 
 		}
 	}

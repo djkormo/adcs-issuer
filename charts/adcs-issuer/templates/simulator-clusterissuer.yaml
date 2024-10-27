@@ -1,9 +1,11 @@
 {{- if .Values.simulator.enabled }}
+{{- if .Values.simulator.exampleCertificate.enabled }}
+
 apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: ClusterAdcsIssuer
 metadata:
   name: {{ .Values.simulator.clusterIssuerName | default "adcs-sim-adcsclusterissuer" }}
-  namespace: {{ .Release.Namespace }}
+
   labels:
     {{- include "chart.labels" . | nindent 4 }}
 spec:
@@ -16,4 +18,5 @@ spec:
   url: https://{{ .Values.simulator.serviceName }}.{{ .Release.Namespace }}.svc:{{ .Values.simulator.servicePort }} # external host
   templateName: BasicSSLWebServer # external template
 
+{{- end }}
 {{- end }}

@@ -19,16 +19,23 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
+	"go.opentelemetry.io/otel/attribute"
+	//"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	globals "github.com/nokia/adcs-issuer/globals"
+	sig_controller "sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 // AdcsIssuerReconciler reconciles a AdcsIssuer object
 type AdcsIssuerReconciler struct {
 	client.Client
-	Log logr.Logger
+	Log    logr.Logger
+	Tracer trace.Tracer
 }
 
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsissuers,verbs=get;list;watch;create;update;patch;delete
@@ -36,7 +43,14 @@ type AdcsIssuerReconciler struct {
 
 func (r *AdcsIssuerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("adcsissuer", req.NamespacedName)
+	log.Info("Processing adcsissuer")
 
+	ctx, span := r.Tracer.Start(ctx, "AdcsIssuerReconciler")
+	span.AddEvent("AdcsIssuerReconciler start",
+		trace.WithAttributes(attribute.String("name", req.Name),
+			attribute.String("namespace", req.Namespace)))
+
+	defer span.End()
 	// your logic here
 
 	// Fetch the AdcsIssuer resource being reconciled
@@ -48,13 +62,23 @@ func (r *AdcsIssuerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// The Manager will log other errors.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	log.Info("Registered issuer")
 
+	span.AddEvent("AdcsIssuerReconciler details", trace.WithAttributes(
+		attribute.String("URL", issuer.Spec.URL),
+		attribute.String("TemplateName", issuer.Spec.TemplateName),
+		attribute.String("StatusCheckInterval", issuer.Spec.StatusCheckInterval),
+		attribute.String("ConnectionTimeout", issuer.Spec.ConnectionTimeout),
+		attribute.String("name", req.Name),
+		attribute.String("namespace", req.Namespace)))
+
+	span.AddEvent("AdcsIssuerReconciler end", trace.WithAttributes(attribute.String("name", req.Name), attribute.String("namespace", req.Namespace)))
 	return ctrl.Result{}, nil
+
 }
 
 func (r *AdcsIssuerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&adcsv1.AdcsIssuer{}).
+		WithOptions(sig_controller.Options{MaxConcurrentReconciles: globals.MaxConcurrentReconciles}).
 		Complete(r)
 }

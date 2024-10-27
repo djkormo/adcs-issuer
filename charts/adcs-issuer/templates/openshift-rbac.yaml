@@ -1,0 +1,16 @@
+{{- if and .Values.openshift.enabled .Values.openshift.anyuid }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: scc-anyuid
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:anyuid
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.controllerManager.rbac.serviceAccountName | default (include "chart.fullname" .) }}
+    namespace: {{ .Release.Namespace }}
+
+{{- end  }} 
