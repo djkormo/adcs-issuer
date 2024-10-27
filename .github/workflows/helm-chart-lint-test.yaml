@@ -42,7 +42,7 @@ jobs:
         continue-on-error: true
         id: list-changed
         run: |
-          changed=$(ct list-changed --config ./.github/ct/ct.yaml)
+          changed=$(ct list-changed --config ./.github/configs/ct.yaml)
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
@@ -51,14 +51,14 @@ jobs:
         continue-on-error: true
         run: |
           pwd 
-          printenv
-          ct lint --config ./.github/ct/ct.yaml --lint-conf ./.github/ct/lintconf.yaml --chart-yaml-schema ./.github/ct/chart_schema.yaml --debug 
+          ct lint --config ./.github/configs/ct.yaml --lint-conf ./.github/configs/lintconf.yaml --chart-yaml-schema ./.github/configs/chart_schema.yaml --debug 
 
       - name: Create kind cluster
         continue-on-error: true
         uses: helm/kind-action@v1.10.0
-          
         if: steps.list-changed.outputs.changed == 'true'
+        with:
+          config: .github/configs/kind-config.yaml
 
       - run: |
           echo "Install cert-manager and so on ..."
@@ -90,5 +90,5 @@ jobs:
 
       - name: Run chart-testing (install)
         continue-on-error: true
-        run: ct install --config ./.github/ct/ct.yaml 
+        run: ct install --config ./.github/configs/ct.yaml 
 
