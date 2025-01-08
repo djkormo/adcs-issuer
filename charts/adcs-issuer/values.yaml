@@ -119,10 +119,13 @@ controllerManager:
 metricsService:
   enabled: true                               # Enable or disable the metrics service.
   nameOverride: null                          # Override the name of the metrics service.
+  serviceMonitor:
+    enabled: true                             # Create a Prometheus ServiceMonitor.
+    scheme: http                              # Scheme to use when scraping - http or https
   ports:
-  - name: https
-    port: 8443
-    targetPort: https
+  - name: http
+    port: 8080
+    targetPort: 8080
   type: ClusterIP                             # Type of Kubernetes service.
 
 # @section Webhook Service
