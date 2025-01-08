@@ -118,6 +118,7 @@ controllerManager:
 # Service configuration for exposing metrics.
 metricsService:
   enabled: true                               # Enable or disable the metrics service.
+  nameOverride: null                          # Override the name of the metrics service.
   ports:
   - name: https
     port: 8443

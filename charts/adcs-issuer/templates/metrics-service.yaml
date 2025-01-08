@@ -1,7 +1,9 @@
+{{- if .Values.metricsService.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "chart.fullname" . }}-controller-manager-metrics-service
+{{- $metricsServiceName := printf "%s-controller-metrics" (include "chart.fullname" . | trunc 44) }}
+  name: {{ default $metricsServiceName $.Values.metricsService.nameOverride }}
   namespace: {{ .Release.Namespace }}
   labels:
     control-plane: controller-manager
@@ -17,3 +19,4 @@ spec:
     {{- include "chart.selectorLabels" . | nindent 4 }}
   ports:
     {{- .Values.metricsService.ports | toYaml | nindent 4 }}
+{{- end }}
