@@ -1,0 +1,24 @@
+{{- if .Values.metricsService.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "chart.fullname" . }}
+  labels:
+    control-plane: controller-manager
+    {{- include "chart.labels" . | nindent 4 }}
+spec:
+  endpoints:
+{{- range $.Values.metricsService.ports }}
+  - path: /metrics
+    port: {{ .port | squote }}
+    scheme: {{ $.Values.metricsService.serviceMonitor.scheme }}
+{{- end }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+      {{- include "chart.labels" . | nindent 6 }}
+{{- end }}
