@@ -42,3 +42,8 @@ adcs-issuer
 install-examples/certificates/*/*
 install-examples/secrets/adcs-credentials.yaml
 kubeconfig
+*.tgz
+*.zip
+*.tar
+
+

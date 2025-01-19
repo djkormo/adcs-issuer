@@ -10,7 +10,7 @@ spec:
     name: adcs-issuer-credentials # secret with username and password
   statusCheckInterval: 5m
   retryInterval: 5m
-  url: http://192.168.43.16/certsrv # external host
+  url: http://adcs-local/certsrv # external host
   templateName: SslWebServer1month # external template 
   #templateName: SSLWebServer2hours # external template
 
