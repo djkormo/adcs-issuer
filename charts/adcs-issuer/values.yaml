@@ -275,7 +275,6 @@ simulator:
       #         - "my-app"
       #     topologyKey: "kubernetes.io/hostname"
 
-
   # @section Resources
   # Resource requests and limits for the simulator container.
   resources:
@@ -291,6 +290,3 @@ simulator:
   exampleCertificate:
     enabled: false                             # Enable or disable the example certificate.
     name: adcs-sim-certificate                # Name of the example certificate.
-
-
-
