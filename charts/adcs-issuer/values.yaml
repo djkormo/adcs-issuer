@@ -1,17 +1,33 @@
+cert-manager: 
+  enabled: false # to install cert-manager as a subchart 
+  namespace: cert-manager
+
 # @section CRDs
 # Whether to install Custom Resource Definitions (CRDs).
 crd:
   install: true
 
+openshift:
+  enabled: false # to use permission SCC on Openshift
+  anyuid: true # add permission for anyuid SCC on Openshift
+
+
 # @section ADCS Issuer Controller Manager
 controllerManager:
+
+  networkPolicy:
+    enabled: false
+
+  podDisruptionBudget:
+    enabled: false
+
 
   # @section Image
   # Image settings for the ADCS Issuer manager.
   manager:
     image:
       repository: djkormo/adcs-issuer  # The repository for the ADCS Issuer Docker image.
-      tag: 2.1.2                       # The tag for the ADCS Issuer Docker image.
+      tag: 2.3.0                       # The tag for the ADCS Issuer Docker image.
     
     # @section Resources
     # Resource requests and limits for the ADCS Issuer container.
@@ -68,8 +84,12 @@ controllerManager:
   arguments:
     enable-leader-election: "true"            # Enable leader election for high availability.
     cluster-resource-namespace: adcs-issuer   # Namespace for cluster resources.
-    zap-log-level: 5                          # Logging level for zap logger.
+    zap-log-level: 2                          # Logging level for zap logger.
     disable-approved-check: "false"           # Disable approved check.
+    enable-tracing: true                      # enable tracing
+    tracing-endpoint: jaeger-collector.jaeger-operator.svc.cluster.local:4318 # tracing endpoint
+    max-concurrent-reconciles: 1              # max concurrent reconciles
+    
 
   # @section Security Context
   # Security context for the controller manager pods.
@@ -117,7 +137,7 @@ controllerManager:
 # @section Metrics Service
 # Service configuration for exposing metrics.
 metricsService:
-  enabled: true                               # Enable or disable the metrics service.
+  enabled: false                              # Enable or disable the metrics service.
   nameOverride: null                          # Override the name of the metrics service.
   serviceMonitor:
     enabled: true                             # Create a Prometheus ServiceMonitor.
@@ -139,6 +159,11 @@ webhookService:
 # @section Node Selector
 # Node selector configuration for the controller manager pods.
 nodeSelector: {}
+
+podPriorityClass:
+  enabled: false
+  name: adcs-issuer 
+  value: 1000  
 
 # @section ADCS Simulator
 # Configuration for the ADCS Simulator.
@@ -250,7 +275,6 @@ simulator:
       #         - "my-app"
       #     topologyKey: "kubernetes.io/hostname"
 
-
   # @section Resources
   # Resource requests and limits for the simulator container.
   resources:
@@ -264,5 +288,5 @@ simulator:
   # @section Example Certificate
   # Configuration for an example certificate used by the simulator.
   exampleCertificate:
-    enabled: true                             # Enable or disable the example certificate.
+    enabled: false                             # Enable or disable the example certificate.
     name: adcs-sim-certificate                # Name of the example certificate.

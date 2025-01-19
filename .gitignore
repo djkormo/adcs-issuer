@@ -1,4 +1,3 @@
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -33,7 +32,18 @@ minikube_downloads/
 *.logs
 *.tar.gz
 adcs-sim
+*.cer
 *.crt
 *.key
 *-all.yaml
 *.exe
+adcs-issuer
+*.logs
+install-examples/certificates/*/*
+install-examples/secrets/adcs-credentials.yaml
+kubeconfig
+*.tgz
+*.zip
+*.tar
+
+

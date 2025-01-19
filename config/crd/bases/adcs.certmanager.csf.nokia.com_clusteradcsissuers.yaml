@@ -14,7 +14,29 @@ spec:
     singular: clusteradcsissuer
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.templateName
+      name: TemplateName
+      type: string
+    - jsonPath: .spec.url
+      name: URL
+      type: string
+    - jsonPath: .spec.connectionTimeout
+      name: ConnectionTimeout
+      priority: 1
+      type: string
+    - jsonPath: .spec.insecureSkipVerify
+      name: InsecureSkipVerify
+      priority: 1
+      type: boolean
+    - jsonPath: .spec.skipNTLM
+      name: SkipNTLM
+      priority: 1
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: ClusterAdcsIssuer is the Schema for the clusteradcsissuers API
@@ -45,6 +67,12 @@ spec:
                   the ADCS server.
                 format: byte
                 type: string
+              connectionTimeout:
+                default: 30s
+                description: |-
+                  Timeout for connection (in time.ParseDuration() format)
+                  Default 30s .
+                type: string
               credentialsRef:
                 description: |-
                   CredentialsRef is a reference to a Secret containing the username and
@@ -57,11 +85,19 @@ spec:
                 required:
                 - name
                 type: object
+              insecureSkipVerify:
+                default: false
+                description: Ommitting  ADCS cacert verification
+                type: boolean
               retryInterval:
                 description: |-
                   How often to retry in case of communication errors (in time.ParseDuration() format)
                   Default 1 hour.
                 type: string
+              skipNTLM:
+                default: false
+                description: Ommitting  NTLM Support
+                type: boolean
               statusCheckInterval:
                 description: |-
                   How often to check for request status in the server (in time.ParseDuration() format)

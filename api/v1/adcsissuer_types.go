@@ -23,6 +23,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // AdcsIssuerSpec defines the desired state of AdcsIssuer
+
 type AdcsIssuerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -54,6 +55,22 @@ type AdcsIssuerSpec struct {
 	// Defaults to the what is specified in main.go or as an cli option.
 	// +optional
 	TemplateName string `json:"templateName,omitempty"`
+
+	// Ommitting  ADCS cacert verification
+	// +optional
+	//+kubebuilder:default:=false
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
+	// Ommitting  NTLM Support
+	// +optional
+	//+kubebuilder:default:=false
+	SkipNTLM bool `json:"skipNTLM,omitempty"`
+
+	// Timeout for connection (in time.ParseDuration() format)
+	// Default 30s .
+	// +optional
+	//+kubebuilder:default:="30s"
+	ConnectionTimeout string `json:"connectionTimeout,omitempty"`
 }
 
 // AdcsIssuerStatus defines the observed state of AdcsIssuer
@@ -65,6 +82,14 @@ type AdcsIssuerStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=adcsissuers,scope=Namespaced
 // +kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="TemplateName",type=string,JSONPath=`.spec.templateName`
+// +kubebuilder:printcolumn:name="URL",type=string,JSONPath=`.spec.url`
+// +kubebuilder:printcolumn:name="ConnectionTimeout",type=string,priority=1,JSONPath=`.spec.connectionTimeout`
+// +kubebuilder:printcolumn:name="InsecureSkipVerify",type=boolean,priority=1,JSONPath=`.spec.insecureSkipVerify`
+// +kubebuilder:printcolumn:name="SkipNTLM",type=boolean,priority=1,JSONPath=`.spec.skipNTLM`
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // AdcsIssuer is the Schema for the adcsissuers API
 type AdcsIssuer struct {

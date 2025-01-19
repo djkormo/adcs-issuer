@@ -17,7 +17,7 @@ type AdcsCertsrv interface {
 	// If cert status is 'Ready' the cert is returned immediately in 'certificate'.
 	// If cert status is 'Pending' the cert can be obtained later with getExistingCertificate using the 'id' (see 'description' for more details)
 	// If cert status is 'Error' see 'description' for details.
-	RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error)
+	RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, string, string, error)
 
 	// Get previously requested certicate from Certserv
 	// Returns (cert status, certificate or description, id, error)
@@ -25,7 +25,7 @@ type AdcsCertsrv interface {
 	// If cert status is 'Ready' the cert is returned in 'certificate'.
 	// If cert status is 'Pending' the cert can be obtained later with getExistingCertificate using the 'id' (see 'description' for more details)
 	// If cert status is 'Error' see 'description' for details.
-	GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error)
+	GetExistingCertificate(id string) (AdcsResponseStatus, string, string, string, string, error)
 
 	// Get the certsrv' CA cert
 	// Returns ( certificate, error)
