@@ -14,10 +14,10 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/djkormo/adcs-issuer/adcs"
+	api "github.com/djkormo/adcs-issuer/api/v1"
 	"github.com/fullsailor/pkcs7"
 	"github.com/go-logr/logr"
-	"github.com/nokia/adcs-issuer/adcs"
-	api "github.com/nokia/adcs-issuer/api/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 

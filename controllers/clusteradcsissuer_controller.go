@@ -22,7 +22,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
+	adcsv1 "github.com/djkormo/adcs-issuer/api/v1"
 )
 
 // ClusterAdcsIssuerReconciler reconciles a ClusterAdcsIssuer object

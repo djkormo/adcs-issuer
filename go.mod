@@ -1,4 +1,4 @@
-module github.com/nokia/adcs-issuer
+module github.com/djkormo/adcs-issuer
 
 go 1.22
 

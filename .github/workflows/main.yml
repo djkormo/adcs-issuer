@@ -33,7 +33,7 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@master
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-          PROJECT: github.com/nokia/adcs-issuer 
+          PROJECT: github.com/djkormo/adcs-issuer 
           
         with:
           name: djkormo/adcs-issuer

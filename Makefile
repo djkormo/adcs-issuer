@@ -12,7 +12,7 @@ ENVTEST_K8S_VERSION = 1.29.0
 COMMIT?=$(shell git rev-parse --short HEAD)
 BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 
-PROJECT?=github.com/nokia/adcs-issuer
+PROJECT?=github.com/djkormo/adcs-issuer
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -60,6 +60,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+# The boilerplate text is inserting an Apache license to the generated files contradicting the repo license... TODO: review
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt

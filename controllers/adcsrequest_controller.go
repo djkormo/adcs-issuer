@@ -30,8 +30,8 @@ import (
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 
-	api "github.com/nokia/adcs-issuer/api/v1"
-	"github.com/nokia/adcs-issuer/issuers"
+	api "github.com/djkormo/adcs-issuer/api/v1"
+	"github.com/djkormo/adcs-issuer/issuers"
 )
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
