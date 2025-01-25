@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: adcs-issuer
+
+git:
+  ignore_tags:
+    - helm/*
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    main: .
+    binary: adcs-issuer
+    mod_timestamp: "{{.CommitTimestamp}}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X {{.ModulePath}}/version.Release={{.Version}}
+      - -X {{.ModulePath}}/version.Commit={{.Commit}}
+      # NOTE: the Makefile uses time of build but that is non-reproducible
+      - -X {{.ModulePath}}/version.BuildTime={{.CommitTimestamp}}
+
+# Build a Docker image using `ko`
+kos:
+  - id: adcs-issuer
+    bare: true
+    repositories:
+      - docker.io/djkormo/adcs-issuer
+      - ghcr.io/djkormo/adcs-issuer
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    tags:
+      - latest
+      - "{{.Tag}}"
+    annotations:
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md
+      org.opencontainers.image.created: "{{.CommitTimestamp}}"
+      org.opencontainers.image.authors: djkormo
+      org.opencontainers.image.source: "https://{{.ModulePath}}"
+      org.opencontainers.image.version: "{{.Tag}}"
+      org.opencontainers.image.revision: "{{.Commit}}"
+
+release:
+  prerelease: auto
+  draft: false
+  header: |
+    ## {{.ProjectName}} {{.Tag}}
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+archives:
+  - name_template: '{{.ProjectName}}_{{.Os}}_{{.Arch}}'
+    files:
+      - LICENSE
+      - README.md
