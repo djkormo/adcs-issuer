@@ -1,19 +1,6 @@
-name: Golang lint issuer
+name: Test
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'api/**.go'
-      - 'cmd/**.go'
-      - 'globals/**.go'
-      - 'config/**.go'
-      - 'controllers/**.go'
-      - 'internal/**.go'
-      - 'version/**.go'
-      - '**.go'
-
-    branches:
-      - main
   pull_request:
 
 permissions:
@@ -33,8 +20,13 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          args: --timeout=3m 
+          args: --timeout=3m
           version: v1.58
           skip-cache: true
           skip-save-cache: true
           cache-invalidation-interval: 15
+      # TODO:
+      #  - codecov (ideally with PR comment)
+      #  - run `make test`
+      #  - `make generate` & make sure there is no diff
+      #  - vulnerability scanner?
