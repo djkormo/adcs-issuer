@@ -33,10 +33,13 @@ issuers/testdata/x509.pem
 minikube_downloads/
 *.logs
 *.tar.gz
-adcs-sim
 *.crt
 *.key
 *-all.yaml
 *.exe
+/adcs-issuer
+/adcs-sim
+/deploy.env
+
 # Added by goreleaser init:
 dist/
