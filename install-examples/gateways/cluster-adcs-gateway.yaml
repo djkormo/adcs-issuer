@@ -10,7 +10,7 @@ metadata:
     cert-manager.io/issuer-group: "adcs.certmanager.csf.nokia.com"
 
     #(optional) this annotation allows you to configure spec.commonName for the Certificate to be generated.
-    cert-manager.io/common-name: "example.gateway.com" # common name should be added. (REQUIRED) CVIEW will raise 412 error without it 
+    cert-manager.io/common-name: "example.gateway.com" # common name should be added. (REQUIRED) ADCS will raise 412 error without it 
 
 spec:
   gatewayClassName: nginx
