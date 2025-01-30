@@ -1,0 +1,29 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: adcs-cluster-gateway
+  namespace: adcs-issuer
+  annotations:
+
+    cert-manager.io/issuer: "adcs-cluster-issuer" #use specific name of issuer
+    cert-manager.io/issuer-kind: "ClusterAdcsIssuer" #or AdcsIssuer
+    cert-manager.io/issuer-group: "adcs.certmanager.csf.nokia.com"
+
+    #(optional) this annotation allows you to configure spec.commonName for the Certificate to be generated.
+    cert-manager.io/common-name: "example.gateway.com" # common name should be added. (REQUIRED) CVIEW will raise 412 error without it 
+
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: http
+      hostname: example.gateway.com
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: example-gateway-com-tls
+
