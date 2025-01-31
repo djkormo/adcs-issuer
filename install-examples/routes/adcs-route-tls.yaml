@@ -1,0 +1,62 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: adcs-route
+  namespace: adcs-issuer
+  annotations:
+    cert-manager.io/issuer: "adcs-cluster-issuer" #use specific name of issuer
+    cert-manager.io/issuer-kind: "ClusterAdcsIssuer" #or AdcsIssuer
+    cert-manager.io/issuer-group: "adcs.certmanager.csf.nokia.com"
+    #cert-manager.io/duration: 1h # Optional, defaults to 90 days
+    #cert-manager.io/renew-before: 30m # Optional, defaults to 1/3 of total certificate duration.
+    cert-manager.io/common-name: "template-route1.apps-crc.testing" # Optional, no default.
+    cert-manager.io/alt-names: "template2-route1.apps-crc.testing" # Optional, no default
+    cert-manager.io/ip-sans: "10.20.30.40,192.168.192.168" # Optional, no default
+    cert-manager.io/private-key-algorithm: "RSA" # Optional, defaults to RSA
+    cert-manager.io/private-key-size: "2048" # Optional, defaults to 265 for ECDSA and 2048 for RSA
+    cert-manager.io/email-sans: "me@example.com,you@example.com" # Optional, no default
+    cert-manager.io/subject-organizations: "Company 1,Company 2" # Optional, no default
+spec:
+  host: template-route1.apps-crc.testing # will be added to the Subject Alternative Names of the CertificateRequest
+  port:
+    targetPort: 5678
+  to:
+    kind: Service
+    name: hello1-openshift
+--- 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello1-openshift
+  namespace: cview-issuer
+spec:
+  ports:
+  - port: 5678
+    targetPort: 5678
+  selector:
+    app: hello1-openshift
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello1-openshift
+  namespace: cview-issuer
+spec:
+  selector:
+    matchLabels:
+      app: hello1-openshift
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hello1-openshift
+    spec:
+      containers:
+      - name: echo
+        image: hashicorp/http-echo
+        args:
+        - "-text=hello1-openshift"
+        ports:
+        - containerPort: 5678    

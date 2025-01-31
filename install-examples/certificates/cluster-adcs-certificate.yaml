@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cluster-adcs-certificate
+  namespace: adcs-issuer
+spec:
+  commonName: example-cluster.com
+  dnsNames:
+  - service1-cluster.example.com
+  - service2-cluster.example.com
+  issuerRef:
+    group: adcs.certmanager.csf.nokia.com
+    kind: ClusterAdcsIssuer
+    name: adcs-cluster-issuer
+  secretName: adcs-cluster-cert
