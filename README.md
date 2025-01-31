@@ -17,7 +17,7 @@ TODO: a short summary of installing and configuring the issuer
 
 ## Documentation
 
-Detailed documentation can be found in the [docs folder](./docs/README.md) or on [GitHub Pages](djkormo.github.io/adcs-issuer).
+Detailed documentation can be found in the [docs folder](./docs/README.md) or on [GitHub Pages](https://djkormo.github.io/adcs-issuer).
 
 ## License
 

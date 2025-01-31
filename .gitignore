@@ -43,3 +43,5 @@ minikube_downloads/
 
 # Added by goreleaser init:
 dist/
+
+kubeconfig
