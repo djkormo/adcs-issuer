@@ -1,48 +1,46 @@
-name: Publish Docker image on Release
+name: Release
 
 on:
   workflow_dispatch:
-    branches: [ main ]
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
 
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-
-      - name: Get the tag version for building image
-        id: get_version
-        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
-
-          
-      - name: Get current date  for building image
-        id: get_date
-        run: echo "BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')" >> $GITHUB_OUTPUT
-
-      - name: Get commit hash  for building image
-        id: get_commit
-        run: echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Print name
-        id: print_args 
-        run: echo "Hello VERSION. ${{ steps.get_version.outputs.VERSION }} . COMMIT. ${{ steps.get_commit.outputs.COMMIT }} BUILD_TIME. ${{steps.get_date.outputs.BUILD_TIME }}"
-
-
-      - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-          PROJECT: github.com/djkormo/adcs-issuer
-          COMMIT:  ${{ steps.get_commit.outputs.COMMIT }}
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
-          BUILD_TIME: ${{steps.get_date.outputs.BUILD_TIME }}
+      - uses: actions/checkout@v4
         with:
-          name: djkormo/adcs-issuer 
-          buildargs: PROJECT,COMMIT,BUILD_TIME,VERSION
+          # Needed for goreleaser
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - uses: docker/login-action@v3
+        with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: "latest,${{ env.VERSION }}"
-          tag_semver: true
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # goreleaser will:
+      #    1. compile the binaries
+      #    2. create & push the docker image using `ko`
+      #    3. create a GitHub release
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

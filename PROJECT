@@ -3,7 +3,7 @@ layout:
 - go.kubebuilder.io/v3
 version: "3"
 domain: certmanager.csf.nokia.com
-repo: github.com/nokia/adcs-issuer
+repo: github.com/djkormo/adcs-issuer
 
 resources:
 

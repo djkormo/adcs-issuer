@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://json.schemastore.org/dependabot-2.0.json
+---
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - golang
+    reviewers:
+      - djkormo
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - github-actions
+    reviewers:
+      - djkormo
+    open-pull-requests-limit: 3

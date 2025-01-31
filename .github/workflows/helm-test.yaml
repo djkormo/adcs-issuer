@@ -1,5 +1,5 @@
-name: Lint and Test Charts
-on: 
+name: Test (Helm)
+on:
   - pull_request
   - workflow_dispatch
 
@@ -40,28 +40,30 @@ jobs:
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
-          
+
       - name: Run chart-testing (lint)
         run: ct lint --config ct.yaml --lint-conf lintconf.yaml --chart-yaml-schema chart_schema.yaml --debug 
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.10.0
-          
         if: steps.list-changed.outputs.changed == 'true'
 
       - run: |
-          kubectl cluster-info 
+          kubectl cluster-info
           kubectl get nodes -v=6
           helm version 
           helm repo add jetstack https://charts.jetstack.io --force-update
           helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.14.2  --set installCRDs=true --set enableCertificateOwnerRef=true
           helm repo add fairwinds-stable https://charts.fairwinds.com/stable --force-update
           helm upgrade --install polaris fairwinds-stable/polaris --namespace demo --create-namespace --set webhook.enable=false --set dashboard.enable=false
+        if: steps.list-changed.outputs.changed == 'true'
         
 
-      - name: Use command polatis
+      - name: Use command polaris
         run: polaris version
+        if: steps.list-changed.outputs.changed == 'true'
         
 
       - name: Run chart-testing (install)
         run: ct install --config ct.yaml --namespace default
+        if: steps.list-changed.outputs.changed == 'true'
