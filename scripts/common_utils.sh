@@ -29,7 +29,7 @@ check_running() {
 
     # Use `kubectl wait` for more efficient waiting instead of polling
     if ! ${kubectl_cmd} wait --for=condition=Ready pod -l "app=${check_pod}" --timeout=60s; then
-        echo "Error: ${check_pod} failed to become ready within timeout."
+        >&2 echo "Error: ${check_pod} failed to become ready within timeout."
         return 1
     fi
 
@@ -41,8 +41,8 @@ check_running() {
 # Check error code from the last command, exit on failure
 check_err() {
     local err=$?
-    if [ ${err} -ne 0 ]; then
-        echo "Error: $*"
+    if [ "${err}" -ne 0 ]; then
+        >&2 echo "Error: $*"
         exit 1  # Use standard Unix exit code
     fi
 }
