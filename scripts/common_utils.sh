@@ -18,7 +18,7 @@
 
 ###############################  utilities  #################################
 
-set -e  # Exit immediately on error
+set -euo pipefail # Exit immediately on error
 
 check_running() {
     local check_pod=$1

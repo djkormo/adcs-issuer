@@ -20,15 +20,15 @@ CITY="YourCity"
 ORG="YourOrganization"
 ORG_UNIT="YourOrganizationalUnit"
 COMMON_NAME="adcs-issuer Test CA"
-KEY_SIZE=4096
-DAYS_VALID=3650  # 10 years
+KEY_SIZE="4096"
+DAYS_VALID="3650"  # 10 years
 
 echo "🔧 Creating directories..."
 mkdir -pv "${CA_DIR}"
 
 # 📍 Generating CA private key
 echo "🔑 Generating CA private key (${KEY_SIZE} bits)..."
-openssl genrsa -out "${CA_DIR}/ca.key" ${KEY_SIZE}
+openssl genrsa -out "${CA_DIR}/ca.key" "${KEY_SIZE}"
 
 # 📍 Creating CA configuration
 echo "📜 Creating CA configuration..."
@@ -60,7 +60,7 @@ echo "📜 Generating CA certificate (valid for ${DAYS_VALID} days)..."
 openssl req -x509 -new -nodes \
     -key "${CA_DIR}/ca.key" \
     -sha256 \
-    -days ${DAYS_VALID} \
+    -days "${DAYS_VALID}" \
     -out "${CA_DIR}/ca.pem" \
     -config "${CA_DIR}/ca.cnf"
 
