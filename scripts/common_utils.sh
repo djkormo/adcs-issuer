@@ -28,11 +28,14 @@ check_running() {
     echo "Info: Waiting for ${check_pod} to become ready..."
 
     # Use `kubectl wait` for more efficient waiting instead of polling
+    if ! "${kubectl_cmd}" get pod -l "app=${check_pod}" --no-headers | grep -q '.'; then
+        >&2 echo "Error: No pods found for app=${check_pod}. Exiting."
+        exit 1  
+    fi
     if ! ${kubectl_cmd} wait --for=condition=Ready pod -l "app=${check_pod}" --timeout=60s; then
         >&2 echo "Error: ${check_pod} failed to become ready within timeout."
-        return 1
+        exit 1
     fi
-
     echo "Info: ${check_pod} is now running."
     "${kubectl_cmd}" get pods -l "app=${check_pod}" 
     echo
