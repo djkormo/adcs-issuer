@@ -21,8 +21,8 @@
 set -euo pipefail # Exit immediately on error
 
 check_running() {
-    local check_pod=$1
-    local prometheus_ns="monitoring"
+    local check_pod="$1"
+    local prometheus_ns='monitoring'
     local kubectl_cmd="kubectl -n ${prometheus_ns}"
 
     echo "Info: Waiting for ${check_pod} to become ready..."
