@@ -14,52 +14,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# modified by Adam Krawczyk - jamallorock
 
 ###############################  utilities  #################################
 
-function check_running() {
-	
-	check_pod=$1
-	prometheus_ns="monitoring"
-	kubectl_cmd="kubectl -n ${prometheus_ns}"
+set -euo pipefail # Exit immediately on error
 
-	echo "Info: Waiting for ${check_pod} to come up..."
-	err_wait=0
-	while true;
-	do
-		sleep 2
-		${kubectl_cmd} get pods | grep ${check_pod}
-		pod_stat=$(${kubectl_cmd} get pods | grep ${check_pod} | awk '{ print $3 }')
-		case "${pod_stat}" in
-			"Running")
-				echo "Info: ${check_pod} deploy succeeded: ${pod_stat}"
-				err=0
-				break;
-				;;
-			"Error")
-				# On Error, wait for 10 seconds before exiting.
-				err_wait=$(( err_wait + 1 ))
-				if [ ${err_wait} -gt 5 ]; then
-					echo "Error: ${check_pod} deploy failed: ${pod_stat}"
-					err=-1
-					break;
-				fi
-				;;
-			*)
-				sleep 2
-				;;
-		esac
-	done
+check_running() {
+    local check_pod="$1"
+    local prometheus_ns='monitoring'
+    local kubectl_cmd="kubectl -n ${prometheus_ns}"
 
-	${kubectl_cmd} get pods | grep ${check_pod}
-	echo
+    echo "Info: Waiting for ${check_pod} to become ready..."
+
+    # Use `kubectl wait` for more efficient waiting instead of polling
+    if ! "${kubectl_cmd}" get pod -l "app=${check_pod}" --no-headers | grep -q '.'; then
+        >&2 echo "Error: No pods found for app=${check_pod}. Exiting."
+        exit 1  
+    fi
+    if ! ${kubectl_cmd} wait --for=condition=Ready pod -l "app=${check_pod}" --timeout=60s; then
+        >&2 echo "Error: ${check_pod} failed to become ready within timeout."
+        exit 1
+    fi
+    echo "Info: ${check_pod} is now running."
+    "${kubectl_cmd}" get pods -l "app=${check_pod}" 
+    echo
 }
 
-# Check error code from last command, exit on error
+# Check error code from the last command, exit on failure
 check_err() {
-	err=$?
-	if [ ${err} -ne 0 ]; then
-		echo "$*"
-		exit -1
-	fi
+    local err=$?
+    if [ "${err}" -ne 0 ]; then
+        >&2 echo "Error: $*"
+        exit 1  # Use standard Unix exit code
+    fi
 }
