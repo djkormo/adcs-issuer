@@ -15,89 +15,87 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/Azure/go-ntlmssp"
-	"k8s.io/klog"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	"github.com/jcmturner/gokrb5/v8/client"
+	"github.com/jcmturner/gokrb5/v8/config"
+	"github.com/jcmturner/gokrb5/v8/spnego"
 )
 
-type NtlmCertsrv struct {
-	url      string
-	username string
-	password string
-	//ca         string
-	httpClient *http.Client
+type KerberosCertsrv struct {
+	url        string
+	krbClient  *client.Client
+	httpClient *spnego.Client
 }
 
-func NewNtlmCertsrv(url string, username string, password string, caCertPool *x509.CertPool, verify bool) (AdcsCertsrv, error) {
-	log := log.Log.WithName("newNtlm")
-	var client *http.Client
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: false,
-			RootCAs:            caCertPool,
-		},
-	}
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification start", "username", username, "password", password, "url", url)
-	}
-	if username != "" && password != "" {
-		// Set up NTLM authentication
-		client = &http.Client{
-			Transport: ntlmssp.Negotiator{
-				RoundTripper: transport,
-			},
-		}
-		if os.Getenv("ENABLE_DEBUG") == "true" {
-			log.Info("NTLM verification Using NTLM")
-		}
-	} else {
-		// Plain client with no NTLM
-		client = &http.Client{
-			Transport: transport,
-		}
-		if os.Getenv("ENABLE_DEBUG") == "true" {
-			log.Info("NTLM verification not using NTLM")
-		}
-		log.V(5).Info("NTLM verification not using NTL")
+func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.CertPool, verify bool) (*KerberosCertsrv, error) {
+	logger := log.Log.WithName("NewKerberosCertsrv")
+	// Path to your krb5.conf
+	krb5ConfPath := "/etc/krb5.conf"
+
+	logger.Info("Loading krb5 config...")
+	krb5Conf, err := config.Load(krb5ConfPath)
+	if err != nil {
+		logger.Error(err, "Failed to load krb5 config")
 	}
 
-	c := &NtlmCertsrv{
-		url:        url,
-		username:   username,
-		password:   password,
-		httpClient: client,
+	logger.Info("Creating Kerberos client...")
+	krbClient := client.NewWithPassword(username, realm, password, krb5Conf,
+		client.DisablePAFXFAST(true))
+
+	logger.Info("Authenticating with Kerberos...")
+	if err := krbClient.Login(); err != nil {
+		logger.Error(err, "Kerberos login failed")
 	}
+
+	logger.Info("Setting up TLS root CAs...")
+	caPool := caCertPool
+	if caPool == nil {
+		caPool, err = x509.SystemCertPool()
+		if err != nil {
+			logger.Error(err, "Failed to load system cert pool")
+		}
+	}
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: caPool,
+		},
+	}
+
+	httpClient := &http.Client{Transport: transport}
+	spnegoClient := spnego.NewClient(krbClient, httpClient, "")
+
+	c := &KerberosCertsrv{
+		url:        url,
+		krbClient:  krbClient,
+		httpClient: spnegoClient,
+	}
+
 	if verify {
-		success, err := c.verifyNtlm()
+		logger.Info("Verifying Kerberos connectivity...")
+		success, err := c.verifyKerberos()
 		if !success {
 			return nil, err
 		}
 	}
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification stop", "username", username, "password", password, "url", url)
-	}
+
+	logger.Info("Kerberos client successfully initialized.")
 	return c, nil
 }
 
-// Check if NTLM authentication is working for current credentials and URL
-func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
-	log := log.Log.WithName("verifyNtlm")
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification", "username", s.username, "url", s.url)
+func (s *KerberosCertsrv) verifyKerberos() (bool, error) {
+	log := log.Log.WithName("verifyKerberos")
+	req, err := http.NewRequest("GET", s.url, nil)
+	if err != nil {
+		return false, err
 	}
-	log.V(5).Info("NTLM verification", "username", s.username, "url", s.url)
 
-	req, _ := http.NewRequest("GET", s.url, nil)
-	req.SetBasicAuth(s.username, s.password)
 	res, err := s.httpClient.Do(req)
 	if err != nil {
 		log.Error(err, "ADCS server error")
 		return false, err
 	}
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification successful", "status", res.Status)
-	}
-	log.V(5).Info("NTLM verification successful", "status", res.Status)
+	defer res.Body.Close()
+	log.Info("Kerberos verification successful", "status", res.Status)
 	return true, nil
 }
 
@@ -108,16 +106,15 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
  * - ADCS Request ID
  * - Error
  */
-func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error) {
+func (s *KerberosCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("GetExistingCertificate")
-	var certStatus = Unknown
+	var certStatus AdcsResponseStatus = Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Making url request", "url", url)
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
 	res, err := s.httpClient.Do(req)
 
@@ -129,7 +126,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", id, err
 	}
-	defer func() { _ = res.Body.Close() }()
+	defer res.Body.Close()
 
 	if res.StatusCode == http.StatusOK {
 		switch ct := strings.Split(res.Header.Get("content-type"), ";"); ct[0] {
@@ -189,7 +186,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 			}
 			return Ready, string(cert), id, nil
 		default:
-			err = fmt.Errorf("unexpected content type %s", ct)
+			err = fmt.Errorf("unexpected content type %s:", ct)
 			log.Error(err, "Unexpected content type")
 			return certStatus, "", id, err
 		}
@@ -205,9 +202,9 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
  * - ADCS Request ID (if known)
  * - Error
  */
-func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
+func (s *KerberosCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
-	var certStatus = Unknown
+	var certStatus AdcsResponseStatus = Unknown
 
 	log.V(1).Info("Starting certificate request")
 
@@ -229,8 +226,6 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		log.Error(err, "Cannot create request")
 		return certStatus, "", "", err
 	}
-	req.SetBasicAuth(s.username, s.password)
-	klog.V(5).Infof("Username as BasicAuth: \n %v ", s.username)
 
 	req.Header.Set("User-agent", "Mozilla")
 	req.Header.Set("Content-type", ct_urlenc)
@@ -300,25 +295,23 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 			err := errors.New(errorString)
 			// TODO
 			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
-			return certStatus, "", "", fmt.Errorf("%s", errorString)
+			return certStatus, "", "", fmt.Errorf(errorString)
 		}
 	}
 
 	return s.GetExistingCertificate(certId)
 }
 
-func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType string) (string, error) {
+func (s *KerberosCertsrv) obtainCaCertificate(certPage string, expectedContentType string) (string, error) {
 	log := log.Log.WithName("obtainCaCertificate")
 
 	// Check for newest renewal number
 	url := fmt.Sprintf("%s/%s", s.url, certcarc)
 	// klog.V(4).Infof("inside obtainCaCertificate: going to url: %v ", url)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("obtainCaCertificate start", "req", req, "url", url)
-		log.Info("obtainCaCertificate start", "password", s.password, "username", s.username)
 	}
 	res1, err := s.httpClient.Do(req)
 
@@ -330,7 +323,7 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 		log.Error(err, "ADCS Certserv error")
 		return "", err
 	}
-	defer func() { _ = res1.Body.Close() }()
+	defer res1.Body.Close()
 	body, err := io.ReadAll(res1.Body)
 	if err != nil {
 		log.Error(err, "Cannot read ADCS Certserv response")
@@ -349,7 +342,6 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	// Get CA cert (newest renewal number)
 	url = fmt.Sprintf("%s/%s?ReqID=CACert&ENC=b64&Renewal=%s", s.url, certPage, renewal)
 	req, _ = http.NewRequest("GET", url, nil)
-	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
 
 	res2, err := s.httpClient.Do(req)
@@ -360,12 +352,12 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 		log.Error(err, "ADCS Certserv error")
 		return "", err
 	}
-	defer func() { _ = res2.Body.Close() }()
+	defer res2.Body.Close()
 
 	if res2.StatusCode == http.StatusOK {
 		ct := res2.Header.Get("content-type")
 		if expectedContentType != ct {
-			err = errors.New("unexpected content type")
+			err = errors.New("Unexpected content type")
 			log.Error(err, err.Error(), "content type", ct)
 			return "", err
 		}
@@ -379,11 +371,11 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	}
 	return "", fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res2.Status, err.Error())
 }
-func (s *NtlmCertsrv) GetCaCertificate() (string, error) {
+func (s *KerberosCertsrv) GetCaCertificate() (string, error) {
 	log.Log.WithName("GetCaCertificate").Info("Getting CA from ADCS Certsrv", "url", s.url)
 	return s.obtainCaCertificate(certnew_cer, ct_pkix)
 }
-func (s *NtlmCertsrv) GetCaCertificateChain() (string, error) {
+func (s *KerberosCertsrv) GetCaCertificateChain() (string, error) {
 	log.Log.WithName("GetCaCertificateChain").Info("Getting CA Chain from ADCS Certsrv", "url", s.url)
 	return s.obtainCaCertificate(certnew_p7b, ct_pkcs7)
 }

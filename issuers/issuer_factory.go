@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -52,9 +53,9 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 	}
 	// TODO: add checking issuer status
 
-	username, password, err := f.getUserPassword(ctx, issuer.Spec.CredentialsRef.Name, issuer.Namespace)
-	if err != nil {
-		return nil, err
+	username, password, realm, pwError := f.getUserPassword(ctx, issuer.Spec.CredentialsRef.Name, issuer.Namespace)
+	if pwError != nil {
+		return nil, pwError
 	}
 
 	certs := issuer.Spec.CABundle
@@ -68,9 +69,20 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 		return nil, fmt.Errorf("error loading ADCS CA bundle")
 	}
 
-	certServ, err := adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
-	if err != nil {
-		return nil, err
+	authMode := os.Getenv("ADCS_AUTH_MODE")
+	var (
+		certServ adcs.AdcsCertsrv
+		adcsErr  error
+	)
+
+	// Choose method based on env
+	if authMode == "kerberos" {
+		certServ, adcsErr = adcs.NewKerberosCertsrv(issuer.Spec.URL, username, realm, password, caCertPool, false)
+	} else { // default is ntlm
+		certServ, adcsErr = adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
+	}
+	if adcsErr != nil {
+		return nil, adcsErr
 	}
 
 	statusCheckInterval := getInterval(
@@ -105,9 +117,9 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 	}
 	// TODO: add checking issuer status
 
-	username, password, err := f.getUserPassword(ctx, issuer.Spec.CredentialsRef.Name, f.ClusterResourceNamespace)
-	if err != nil {
-		return nil, err
+	username, password, realm, pwError := f.getUserPassword(ctx, issuer.Spec.CredentialsRef.Name, f.ClusterResourceNamespace)
+	if pwError != nil {
+		return nil, pwError
 	}
 
 	certs := issuer.Spec.CABundle
@@ -121,9 +133,20 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		return nil, fmt.Errorf("error loading ADCS CA bundle")
 	}
 
-	certServ, err := adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
-	if err != nil {
-		return nil, err
+	authMode := os.Getenv("ADCS_AUTH_MODE")
+	var (
+		certServ adcs.AdcsCertsrv
+		adcsErr  error
+	)
+
+	// Choose method based on env
+	if authMode == "kerberos" {
+		certServ, adcsErr = adcs.NewKerberosCertsrv(issuer.Spec.URL, username, realm, password, caCertPool, false)
+	} else { // default is ntlm
+		certServ, adcsErr = adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
+	}
+	if adcsErr != nil {
+		return nil, adcsErr
 	}
 
 	statusCheckInterval := getInterval(
@@ -164,8 +187,9 @@ func getInterval(specValue string, def string, log logr.Logger) time.Duration {
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 
-func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, namespace string) (string, string, error) {
+func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, namespace string) (string, string, string, error) {
 	secret := new(corev1.Secret)
+<<<<<<< HEAD
 	if err := f.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
 		return "", "", err
 	}
@@ -175,7 +199,21 @@ func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, 
 	if _, ok := secret.Data["password"]; !ok {
 		return "", "", fmt.Errorf("password not set in secret")
 
+=======
+	if err := f.Client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
+		return "", "", "", err
+	}
+	if _, ok := secret.Data["username"]; !ok {
+		return "", "", "", fmt.Errorf("User name not set in secret")
+	}
+	if _, ok := secret.Data["password"]; !ok {
+		return "", "", "", fmt.Errorf("Password not set in secret")
+>>>>>>> 1ba8dd0 (add kerberos adcs auth support)
 	}
 
-	return string(secret.Data["username"]), string(secret.Data["password"]), nil
+	if _, ok := secret.Data["realm"]; !ok {
+		return "", "", "", fmt.Errorf("Realm not set in secret")
+	}
+
+	return string(secret.Data["username"]), string(secret.Data["password"]), string(secret.Data["realm"]), nil
 }
