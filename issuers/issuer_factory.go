@@ -120,7 +120,7 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 	if issuer.Spec.InsecureSkipVerify != nil {
 		insecureSkipVerify = *issuer.Spec.InsecureSkipVerify
 	}
-	
+
 	var caCertPool *x509.CertPool
 	certs := issuer.Spec.CABundle
 	if len(certs) > 0 {

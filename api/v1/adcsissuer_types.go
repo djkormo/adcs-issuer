@@ -46,7 +46,7 @@ type AdcsIssuerSpec struct {
 	// This should be used only for testing or in combination with VerifyConnection or VerifyPeerCertificate.
 	// Default: false
 	// +optional
-	InsecureSkipVerify   *bool                 `json:"insecureSkipVerify,omitempty"`
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // AdcsIssuerStatus defines the observed state of AdcsIssuer
