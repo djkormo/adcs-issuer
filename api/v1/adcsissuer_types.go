@@ -39,6 +39,10 @@ type AdcsIssuerSpec struct {
 	// Defaults to the what is specified in main.go or as an cli option.
 	// +optional
 	TemplateName string `json:"templateName,omitempty"`
+
+	// Skip TLS ferify NTLM
+	// +optional
+	InsecureSkipVerify   *bool                 `json:"insecureSkipVerify,omitempty"`
 }
 
 // AdcsIssuerStatus defines the observed state of AdcsIssuer
