@@ -38,17 +38,17 @@ const (
 	ct_urlenc = "application/x-www-form-urlencoded"
 )
 
-func NewNtlmCertsrv(url string, username string, password string, caCertPool *x509.CertPool, verify bool) (AdcsCertsrv, error) {
+func NewNtlmCertsrv(url string, username string, password string, caCertPool *x509.CertPool, verify bool, insecureSkipVerify bool) (AdcsCertsrv, error) {
 	log := log.Log.WithName("newNtlm")
 	var client *http.Client
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: false,
+			InsecureSkipVerify: insecureSkipVerify,
 			RootCAs:            caCertPool,
 		},
 	}
 	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification start", "username", username, "password", password, "url", url)
+		log.Info("NTLM verification start", "username", username, "password", password, "url", url, "insecureSkipVerify", insecureSkipVerify)
 	}
 	if username != "" && password != "" {
 		// Set up NTLM authentication
@@ -84,7 +84,7 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 		}
 	}
 	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification stop", "username", username, "password", password, "url", url)
+		log.Info("NTLM verification stop", "username", username, "password", password, "url", url, "insecureSkipVerify", insecureSkipVerify)
 	}
 	return c, nil
 }
