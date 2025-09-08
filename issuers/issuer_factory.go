@@ -116,7 +116,7 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		return nil, err
 	}
 
-	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.Name, issuer.Namespace)
+	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.Name, f.ClusterResourceNamespace)
 	if err != nil {
 		certs = []byte{}
 	}
