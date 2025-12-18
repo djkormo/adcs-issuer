@@ -16,12 +16,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.24'
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           args: --timeout=3m
-          version: v1.58
+          version: v2.2.2
           skip-cache: true
           skip-save-cache: true
           cache-invalidation-interval: 15
@@ -29,4 +29,5 @@ jobs:
       #  - codecov (ideally with PR comment)
       #  - run `make test`
       #  - `make generate` & make sure there is no diff
+
       #  - vulnerability scanner?
