@@ -42,7 +42,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Fetch the AdcsRequest resource being reconciled
 	ar := new(api.AdcsRequest)
-	if err := r.Client.Get(ctx, req.NamespacedName, ar); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, ar); err != nil {
 		// We don't log error here as this is probably the 'NotFound'
 		// case for deleted object.
 		//
@@ -150,7 +150,7 @@ func (r *AdcsRequestReconciler) setStatus(ctx context.Context, ar *api.AdcsReque
 	}
 	r.Recorder.Event(ar, eventType, string(ar.Status.State), ar.Status.Reason)
 
-	return r.Client.Status().Update(ctx, ar)
+	return r.Status().Update(ctx, ar)
 }
 
 func (r *AdcsRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {

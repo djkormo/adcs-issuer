@@ -26,7 +26,7 @@ func (r *AdcsIssuerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Fetch the AdcsIssuer resource being reconciled
 	issuer := new(adcsv1.AdcsIssuer)
-	if err := r.Client.Get(ctx, req.NamespacedName, issuer); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, issuer); err != nil {
 		// We don't log error here as this is probably the 'NotFound'
 		// case for deleted object. The AdcsRequest will be automatically deleted for cascading delete.
 		//
