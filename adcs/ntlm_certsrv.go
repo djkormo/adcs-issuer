@@ -310,7 +310,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 			err := errors.New(errorString)
 			// TODO
 			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
-			return certStatus, "", "", fmt.Errorf(errorString)
+			return certStatus, "", "", fmt.Errorf("%s", errorString)
 		}
 	}
 

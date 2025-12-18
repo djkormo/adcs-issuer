@@ -11,7 +11,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer  # The repository for the ADCS Issuer Docker image.
-      tag: 2.1.2                       # The tag for the ADCS Issuer Docker image.
+      tag: 2.1.5                       # The tag for the ADCS Issuer Docker image.
     
     # @section Resources
     # Resource requests and limits for the ADCS Issuer container.
