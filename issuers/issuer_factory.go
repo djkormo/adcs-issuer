@@ -57,18 +57,24 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 		return nil, err
 	}
 
+	insecureSkipVerify := false
+	if issuer.Spec.InsecureSkipVerify != nil {
+		insecureSkipVerify = *issuer.Spec.InsecureSkipVerify
+	}
+
+	var caCertPool *x509.CertPool
 	certs := issuer.Spec.CABundle
-	if len(certs) == 0 {
-		return nil, fmt.Errorf("CA Bundle required")
+	if len(certs) > 0 {
+		caCertPool = x509.NewCertPool()
+		ok := caCertPool.AppendCertsFromPEM(certs)
+		if !ok {
+			return nil, fmt.Errorf("error loading ADCS CA bundle")
+		}
+	} else if !insecureSkipVerify {
+		return nil, fmt.Errorf("CA Bundle required when insecureSkipVerify is false")
 	}
 
-	caCertPool := x509.NewCertPool()
-	ok := caCertPool.AppendCertsFromPEM(certs)
-	if !ok {
-		return nil, fmt.Errorf("error loading ADCS CA bundle")
-	}
-
-	certServ, err := adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
+	certServ, err := adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false, insecureSkipVerify)
 	if err != nil {
 		return nil, err
 	}
@@ -110,18 +116,24 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		return nil, err
 	}
 
+	insecureSkipVerify := false
+	if issuer.Spec.InsecureSkipVerify != nil {
+		insecureSkipVerify = *issuer.Spec.InsecureSkipVerify
+	}
+
+	var caCertPool *x509.CertPool
 	certs := issuer.Spec.CABundle
-	if len(certs) == 0 {
-		return nil, fmt.Errorf("CA Bundle required")
+	if len(certs) > 0 {
+		caCertPool = x509.NewCertPool()
+		ok := caCertPool.AppendCertsFromPEM(certs)
+		if !ok {
+			return nil, fmt.Errorf("error loading ADCS CA bundle")
+		}
+	} else if !insecureSkipVerify {
+		return nil, fmt.Errorf("CA Bundle required when insecureSkipVerify is false")
 	}
 
-	caCertPool := x509.NewCertPool()
-	ok := caCertPool.AppendCertsFromPEM(certs)
-	if !ok {
-		return nil, fmt.Errorf("error loading ADCS CA bundle")
-	}
-
-	certServ, err := adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
+	certServ, err := adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false, insecureSkipVerify)
 	if err != nil {
 		return nil, err
 	}
