@@ -34,8 +34,18 @@ spec:
           spec:
             description: AdcsIssuerSpec defines the desired state of AdcsIssuer
             properties:
+              caBundleRef:
+                description: CABundleRef is a reference to a secret with a PEM encoded TLS certificate to use to verify
+                  connections to the ADCS server.
+                properties:
+                  name:
+                    description: Name of the referent.
+                    type: string
+                required:
+                - name
+                type: object
               caBundle:
-                description: CABundle is a PEM encoded TLS certifiate to use to verify
+                description: CABundle is a PEM encoded TLS certificate to use to verify
                   connections to the ADCS server.
                 format: byte
                 type: string
