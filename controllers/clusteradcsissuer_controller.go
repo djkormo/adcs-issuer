@@ -26,7 +26,7 @@ func (r *ClusterAdcsIssuerReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// Fetch the ClusterAdcsIssuer resource being reconciled
 	issuer := new(adcsv1.ClusterAdcsIssuer)
-	if err := r.Client.Get(ctx, req.NamespacedName, issuer); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, issuer); err != nil {
 		// We don't log error here as this is probably the 'NotFound'
 		// case for deleted object. The AdcsRequest will be automatically deleted for cascading delete.
 		//

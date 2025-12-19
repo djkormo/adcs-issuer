@@ -11,8 +11,9 @@ import (
 	neturl "net/url"
 	"os"
 	"regexp"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/Azure/go-ntlmssp"
 	"k8s.io/klog"
@@ -120,7 +121,7 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
  */
 func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("GetExistingCertificate")
-	var certStatus AdcsResponseStatus = Unknown
+	var certStatus = Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
 	if os.Getenv("ENABLE_DEBUG") == "true" {
@@ -139,7 +140,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", id, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode == http.StatusOK {
 		switch ct := strings.Split(res.Header.Get("content-type"), ";"); ct[0] {
@@ -199,7 +200,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 			}
 			return Ready, string(cert), id, nil
 		default:
-			err = fmt.Errorf("unexpected content type %s:", ct)
+			err = fmt.Errorf("unexpected content type %s", ct)
 			log.Error(err, "Unexpected content type")
 			return certStatus, "", id, err
 		}
@@ -217,7 +218,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
  */
 func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
-	var certStatus AdcsResponseStatus = Unknown
+	var certStatus = Unknown
 
 	log.V(1).Info("Starting certificate request")
 
@@ -310,7 +311,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 			err := errors.New(errorString)
 			// TODO
 			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
-			return certStatus, "", "", fmt.Errorf(errorString)
+			return certStatus, "", "", fmt.Errorf("%s", errorString)
 		}
 	}
 
@@ -340,7 +341,7 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 		log.Error(err, "ADCS Certserv error")
 		return "", err
 	}
-	defer res1.Body.Close()
+	defer func() { _ = res1.Body.Close() }()
 	body, err := io.ReadAll(res1.Body)
 	if err != nil {
 		log.Error(err, "Cannot read ADCS Certserv response")
@@ -370,12 +371,12 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 		log.Error(err, "ADCS Certserv error")
 		return "", err
 	}
-	defer res2.Body.Close()
+	defer func() { _ = res2.Body.Close() }()
 
 	if res2.StatusCode == http.StatusOK {
 		ct := res2.Header.Get("content-type")
 		if expectedContentType != ct {
-			err = errors.New("Unexpected content type")
+			err = errors.New("unexpected content type")
 			log.Error(err, err.Error(), "content type", ct)
 			return "", err
 		}

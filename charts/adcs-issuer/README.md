@@ -7,8 +7,8 @@ ADCS Issuer plugin for cert-manager.
 ### Chart Details
 
 - **Chart Name:** adcs-issuer
-- **Version:** ![Version: 2.1.2](https://img.shields.io/badge/Version-2.1.2-informational?style=flat-square)
-- **App Version:** ![AppVersion: 2.1.2](https://img.shields.io/badge/AppVersion-2.1.2-informational?style=flat-square)
+- **Version:** ![Version: 2.1.5](https://img.shields.io/badge/Version-2.1.5-informational?style=flat-square)
+- **App Version:** ![AppVersion: 2.1.5](https://img.shields.io/badge/AppVersion-2.1.5-informational?style=flat-square)
 - **Chart Type:** ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 **Homepage:** <https://github.com/djkormo/adcs-issuer>
@@ -20,11 +20,7 @@ ADCS Issuer plugin for cert-manager.
 
 ## Requirements
 
-Kubernetes: `>=1.16.0`
-
-| Repository | Name | Version |
-|------------|------|---------|
-| https://charts.jetstack.io | cert-manager | >=1.9 |
+Kubernetes: `>=1.16.0-0`
 
 ## Values
 
@@ -68,9 +64,12 @@ Kubernetes: `>=1.16.0`
 | controllerManager.securityContext.runAsUser | int | `1000` |  |
 | crd.install | bool | `true` |  |
 | metricsService.enabled | bool | `true` |  |
-| metricsService.ports[0].name | string | `"https"` |  |
-| metricsService.ports[0].port | int | `8443` |  |
-| metricsService.ports[0].targetPort | string | `"https"` |  |
+| metricsService.nameOverride | string | `nil` |  |
+| metricsService.ports[0].name | string | `"http"` |  |
+| metricsService.ports[0].port | int | `8080` |  |
+| metricsService.ports[0].targetPort | string | `"metrics"` |  |
+| metricsService.serviceMonitor.enabled | bool | `true` |  |
+| metricsService.serviceMonitor.scheme | string | `"http"` |  |
 | metricsService.type | string | `"ClusterIP"` |  |
 | nodeSelector | object | `{}` |  |
 | simulator.affinity.nodeAffinity | object | `{}` |  |
@@ -79,6 +78,7 @@ Kubernetes: `>=1.16.0`
 | simulator.arguments.dns | string | `"adcs-sim-service.adcs-issuer.svc,adcs2.example.com"` |  |
 | simulator.arguments.ips | string | `"10.10.10.1,10.10.10.2"` |  |
 | simulator.arguments.port | int | `8443` |  |
+| simulator.caBundle | string | `""` |  |
 | simulator.certificateDuration | string | `"2160h"` |  |
 | simulator.certificateRenewBefore | string | `"360h"` |  |
 | simulator.clusterIssuserName | string | `"adcs-sim-adcsclusterissuer"` |  |

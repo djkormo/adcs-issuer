@@ -96,7 +96,7 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 
 		message := "The CertificateRequest was denied by an approval controller"
-		return ctrl.Result{}, r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonDenied, message)
+		return ctrl.Result{}, r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonDenied, "%s", message)
 	}
 
 	if r.CheckApprovedCondition {
@@ -116,7 +116,7 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	adcsReq := new(api.AdcsRequest)
 	// Check if AdcsRequest with the same name already exists
-	err = r.Client.Get(ctx, req.NamespacedName, adcsReq)
+	err = r.Get(ctx, req.NamespacedName, adcsReq)
 	if err != nil {
 		if !apimacherrors.IsNotFound(err) {
 			log.Error(err, "failed to check for existing AdcsRequest resource")
@@ -136,7 +136,7 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 		// is usually unique for each CSR.
 		// So, this is actually a rare case because any change in Certificate will produce
 		// new CertificateRequest with different name.
-		if err := r.Client.Delete(ctx, adcsReq); err != nil {
+		if err := r.Delete(ctx, adcsReq); err != nil {
 			log.Error(err, "failed to delete existing AdcsRequest")
 		}
 	}
@@ -194,7 +194,7 @@ func RequestDiffers(adcsReq *api.AdcsRequest, certReq *cmapi.CertificateRequest)
 
 func (r *CertificateRequestReconciler) GetCertificateRequest(ctx context.Context, key client.ObjectKey) (cmapi.CertificateRequest, error) {
 	cr := new(cmapi.CertificateRequest)
-	if err := r.Client.Get(ctx, key, cr); err != nil {
+	if err := r.Get(ctx, key, cr); err != nil {
 		// We don't log error here as this is probably the 'NotFound'
 		// case for deleted object. The AdcsRequest will be automatically deleted for cascading delete.
 		//
@@ -215,5 +215,5 @@ func (r *CertificateRequestReconciler) SetStatus(ctx context.Context, cr *cmapi.
 	}
 	r.Recorder.Event(cr, eventType, reason, completeMessage)
 
-	return r.Client.Status().Update(ctx, cr)
+	return r.Status().Update(ctx, cr)
 }

@@ -38,7 +38,7 @@ func (f *IssuerFactory) GetIssuer(ctx context.Context, ref cmmeta.ObjectReferenc
 	case "clusteradcsissuer":
 		return f.getClusterAdcsIssuer(ctx, key)
 	}
-	return nil, fmt.Errorf("Unsupported issuer kind %s.", ref.Kind)
+	return nil, fmt.Errorf("unsupported issuer kind %s", ref.Kind)
 }
 
 // Get AdcsIssuer object from K8s and create Issuer
@@ -47,7 +47,7 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 	log := ctrl.LoggerFrom(ctx, "AdcsIssuer", key)
 
 	issuer := new(api.AdcsIssuer)
-	if err := f.Client.Get(ctx, key, issuer); err != nil {
+	if err := f.Get(ctx, key, issuer); err != nil {
 		return nil, err
 	}
 	// TODO: add checking issuer status
@@ -100,7 +100,7 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 	key.Namespace = ""
 
 	issuer := new(api.ClusterAdcsIssuer)
-	if err := f.Client.Get(ctx, key, issuer); err != nil {
+	if err := f.Get(ctx, key, issuer); err != nil {
 		return nil, err
 	}
 	// TODO: add checking issuer status
@@ -166,14 +166,14 @@ func getInterval(specValue string, def string, log logr.Logger) time.Duration {
 
 func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, namespace string) (string, string, error) {
 	secret := new(corev1.Secret)
-	if err := f.Client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
+	if err := f.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
 		return "", "", err
 	}
 	if _, ok := secret.Data["username"]; !ok {
-		return "", "", fmt.Errorf("User name not set in secret")
+		return "", "", fmt.Errorf("user name not set in secret")
 	}
 	if _, ok := secret.Data["password"]; !ok {
-		return "", "", fmt.Errorf("Password not set in secret")
+		return "", "", fmt.Errorf("password not set in secret")
 
 	}
 
