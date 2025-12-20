@@ -189,26 +189,14 @@ func getInterval(specValue string, def string, log logr.Logger) time.Duration {
 
 func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, namespace string) (string, string, string, error) {
 	secret := new(corev1.Secret)
-<<<<<<< HEAD
 	if err := f.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
-		return "", "", err
-	}
-	if _, ok := secret.Data["username"]; !ok {
-		return "", "", fmt.Errorf("user name not set in secret")
-	}
-	if _, ok := secret.Data["password"]; !ok {
-		return "", "", fmt.Errorf("password not set in secret")
-
-=======
-	if err := f.Client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
 		return "", "", "", err
 	}
 	if _, ok := secret.Data["username"]; !ok {
-		return "", "", "", fmt.Errorf("User name not set in secret")
+		return "", "", "", fmt.Errorf("user name not set in secret")
 	}
 	if _, ok := secret.Data["password"]; !ok {
-		return "", "", "", fmt.Errorf("Password not set in secret")
->>>>>>> 1ba8dd0 (add kerberos adcs auth support)
+		return "", "", "", fmt.Errorf("password not set in secret")
 	}
 
 	authMode := os.Getenv("ADCS_AUTH_MODE")

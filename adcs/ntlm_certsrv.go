@@ -17,7 +17,6 @@ import (
 
 	"github.com/Azure/go-ntlmssp"
 	"k8s.io/klog"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type NtlmCertsrv struct {
