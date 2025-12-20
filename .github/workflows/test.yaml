@@ -21,7 +21,7 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           args: --timeout=3m
-          version: v2.2.2
+          version: v2.7.2
           skip-cache: true
           skip-save-cache: true
           cache-invalidation-interval: 15
@@ -31,3 +31,4 @@ jobs:
       #  - `make generate` & make sure there is no diff
 
       #  - vulnerability scanner?
+
