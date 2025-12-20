@@ -14,6 +14,11 @@ BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 
 PROJECT?=github.com/djkormo/adcs-issuer
 
+# Trivy severity level and output format
+TRIVY_SEVERITY ?= CRITICAL,HIGH
+TRIVY_FORMAT ?= table
+
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -163,6 +168,16 @@ docker-push: ## Push docker image with the manager.
 docker-repo-login: ## Login to repo
 	$(CONTAINER_TOOL) login	
 
+
+.PHONY: trivy-scan ## Use trivy scan
+trivy-scan:
+	trivy image $(DOCKER_REPO)/$(APP_NAME):$(VERSION) \
+		--severity $(TRIVY_SEVERITY) \
+		--exit-code 1 \
+		--format $(TRIVY_FORMAT) \
+		--skip-dirs vendor
+
+
 .PHONY: docker-system-prune
 docker-system-prune: ## Prune images
 	$(CONTAINER_TOOL) system prune	
@@ -270,3 +285,4 @@ GOBIN=$(LOCALBIN) go install $${package} ;\
 mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
 }
 endef
+
