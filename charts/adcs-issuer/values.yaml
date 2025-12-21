@@ -56,13 +56,30 @@ controllerManager:
   # Number of replicas for the controller manager deployment.
   replicas: 1
 
+  # @section KerberosAuthentication
+  # setting to configure kerberos auth instead of ntlm
+  kerberosAuthentication:
+    enabled: false 
+    krb5Config: |
+      [libdefaults]
+        default_realm = EXAMPLE.COM
+        dns_lookup_kdc = true
+
+      [realms]
+        EXAMPLE.COM  = {
+          kdc = dc01.example.com
+        }
+
+      [domain_realm]
+        .example.com = EXAMPLE.COM
+        example.com = EXAMPLE.COM
+
   # @section Environment Variables
   # Environment variables for the controller manager.
   environment:
     KUBERNETES_CLUSTER_DOMAIN: cluster.local  # Kubernetes cluster domain.
     ENABLE_WEBHOOKS: "false"                  # Enable or disable webhooks.
     ENABLE_DEBUG: "false"                     # Enable or disable debug mode.
-
   # @section Arguments
   # Command-line arguments for the controller manager.
   arguments:

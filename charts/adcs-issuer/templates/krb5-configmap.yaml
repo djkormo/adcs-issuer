@@ -1,0 +1,14 @@
+{{- if .Values.controllerManager.kerberosAuthentication.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chart.fullname" . }}-krb5-config
+  labels:
+    app: {{ include "chart.name" . }}
+    chart: {{ include "chart.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  krb5.conf: |
+{{ .Values.controllerManager.kerberosAuthentication.krb5Config | indent 4 }}
+{{- end }}
