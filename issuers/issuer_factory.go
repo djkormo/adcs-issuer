@@ -201,7 +201,7 @@ func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, 
 
 	authMode := os.Getenv("ADCS_AUTH_MODE")
 	if _, ok := secret.Data["realm"]; !ok && authMode == "kerberos" {
-		return "", "", "", fmt.Errorf("Realm not set in secret")
+		return "", "", "", fmt.Errorf("realm not set in secret")
 	}
 
 	return string(secret.Data["username"]), string(secret.Data["password"]), string(secret.Data["realm"]), nil

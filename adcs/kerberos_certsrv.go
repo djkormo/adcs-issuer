@@ -94,7 +94,11 @@ func (s *KerberosCertsrv) verifyKerberos() (bool, error) {
 		log.Error(err, "ADCS server error")
 		return false, err
 	}
-	defer res.Body.Close()
+	defer func() {
+		if cerr := res.Body.Close(); cerr != nil {
+			log.Error(cerr, "failed to close response body")
+		}
+	}()
 	log.Info("Kerberos verification successful", "status", res.Status)
 	return true, nil
 }
@@ -108,7 +112,7 @@ func (s *KerberosCertsrv) verifyKerberos() (bool, error) {
  */
 func (s *KerberosCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("GetExistingCertificate")
-	var certStatus AdcsResponseStatus = Unknown
+	certStatus := Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
 	if os.Getenv("ENABLE_DEBUG") == "true" {
@@ -126,7 +130,11 @@ func (s *KerberosCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus,
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", id, err
 	}
-	defer res.Body.Close()
+	defer func() {
+		if cerr := res.Body.Close(); cerr != nil {
+			log.Error(cerr, "failed to close response body")
+		}
+	}()
 
 	if res.StatusCode == http.StatusOK {
 		switch ct := strings.Split(res.Header.Get("content-type"), ";"); ct[0] {
@@ -186,7 +194,7 @@ func (s *KerberosCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus,
 			}
 			return Ready, string(cert), id, nil
 		default:
-			err = fmt.Errorf("unexpected content type %s:", ct)
+			err = fmt.Errorf("unexpected content type %s", ct)
 			log.Error(err, "Unexpected content type")
 			return certStatus, "", id, err
 		}
@@ -204,7 +212,7 @@ func (s *KerberosCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus,
  */
 func (s *KerberosCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
-	var certStatus AdcsResponseStatus = Unknown
+	certStatus := Unknown
 
 	log.V(1).Info("Starting certificate request")
 
@@ -247,6 +255,11 @@ func (s *KerberosCertsrv) RequestCertificate(csr string, template string) (AdcsR
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", "", err
 	}
+	defer func() {
+		if cerr := res.Body.Close(); cerr != nil {
+			log.Error(cerr, "failed to close response body")
+		}
+	}()
 
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Sending request", "response", res)
@@ -295,7 +308,7 @@ func (s *KerberosCertsrv) RequestCertificate(csr string, template string) (AdcsR
 			err := errors.New(errorString)
 			// TODO
 			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
-			return certStatus, "", "", fmt.Errorf(errorString)
+			return certStatus, "", "", err
 		}
 	}
 
@@ -323,7 +336,11 @@ func (s *KerberosCertsrv) obtainCaCertificate(certPage string, expectedContentTy
 		log.Error(err, "ADCS Certserv error")
 		return "", err
 	}
-	defer res1.Body.Close()
+	defer func() {
+		if cerr := res1.Body.Close(); cerr != nil {
+			log.Error(cerr, "failed to close response body")
+		}
+	}()
 	body, err := io.ReadAll(res1.Body)
 	if err != nil {
 		log.Error(err, "Cannot read ADCS Certserv response")
@@ -352,12 +369,16 @@ func (s *KerberosCertsrv) obtainCaCertificate(certPage string, expectedContentTy
 		log.Error(err, "ADCS Certserv error")
 		return "", err
 	}
-	defer res2.Body.Close()
+	defer func() {
+		if cerr := res2.Body.Close(); cerr != nil {
+			log.Error(cerr, "failed to close response body")
+		}
+	}()
 
 	if res2.StatusCode == http.StatusOK {
 		ct := res2.Header.Get("content-type")
 		if expectedContentType != ct {
-			err = errors.New("Unexpected content type")
+			err = errors.New("unexpected content type")
 			log.Error(err, err.Error(), "content type", ct)
 			return "", err
 		}
