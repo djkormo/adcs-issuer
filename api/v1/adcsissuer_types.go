@@ -39,6 +39,14 @@ type AdcsIssuerSpec struct {
 	// Defaults to the what is specified in main.go or as an cli option.
 	// +optional
 	TemplateName string `json:"templateName,omitempty"`
+
+	// InsecureSkipVerify controls whether a client verifies the server's certificate chain and host name.
+	// If InsecureSkipVerify is true, crypto/tls accepts any certificate presented by the server.
+	// In this mode, TLS is susceptible to machine-in-the-middle attacks unless custom verification is used.
+	// This should be used only for testing or in combination with VerifyConnection or VerifyPeerCertificate.
+	// Default: false
+	// +optional
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // AdcsIssuerStatus defines the observed state of AdcsIssuer
