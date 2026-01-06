@@ -35,6 +35,7 @@ func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.
 	krb5Conf, err := config.Load(krb5ConfPath)
 	if err != nil {
 		logger.Error(err, "Failed to load krb5 config")
+		return nil, err
 	}
 
 	logger.Info("Creating Kerberos client...")
@@ -44,6 +45,7 @@ func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.
 	logger.Info("Authenticating with Kerberos...")
 	if err := krbClient.Login(); err != nil {
 		logger.Error(err, "Kerberos login failed")
+		return nil, err
 	}
 
 	logger.Info("Setting up TLS root CAs...")
@@ -52,6 +54,7 @@ func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.
 		caPool, err = x509.SystemCertPool()
 		if err != nil {
 			logger.Error(err, "Failed to load system cert pool")
+			return nil, err
 		}
 	}
 
