@@ -54,7 +54,7 @@ spec:
       containers:
         - name: manager
           image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag | default .Chart.AppVersion }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.controllerManager.manager.image.imagePullPolicy | default "Always" }}
           {{- if .Values.controllerManager.arguments }}
           args:
             {{- range $key, $value := .Values.controllerManager.arguments }}
