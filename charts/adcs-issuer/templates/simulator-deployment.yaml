@@ -29,7 +29,7 @@ spec:
       containers:
         - name: manager
           image: {{ .Values.simulator.image.repository }}:{{ .Values.simulator.image.tag }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.simulator.image.imagePullPolicy | default "Always" }}
           command:
             - /usr/local/adcs-sim/manager
           {{- if .Values.simulator.arguments }}
