@@ -40,7 +40,8 @@ Kubernetes: `>=1.16.0-0`
 | controllerManager.environment.ENABLE_WEBHOOKS | string | `"false"` |  |
 | controllerManager.environment.KUBERNETES_CLUSTER_DOMAIN | string | `"cluster.local"` |  |
 | controllerManager.manager.image.repository | string | `"djkormo/adcs-issuer"` |  |
-| controllerManager.manager.image.tag | string | `"2.1.2"` |  |
+| controllerManager.manager.image.tag | string | `"2.1.5"` |  |
+| controllerManager.manager.image.imagePullPolicy | string | `"Always"` |  |
 | controllerManager.manager.livenessProbe.httpGet.path | string | `"/healthz"` |  |
 | controllerManager.manager.livenessProbe.httpGet.port | int | `8081` |  |
 | controllerManager.manager.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
@@ -94,6 +95,7 @@ Kubernetes: `>=1.16.0-0`
 | simulator.exampleCertificate.name | string | `"adcs-sim-certificate"` |  |
 | simulator.image.repository | string | `"djkormo/adcs-sim"` |  |
 | simulator.image.tag | string | `"0.0.6"` |  |
+| simulator.image.imagePullPolicy | string | `"Always"` |  |
 | simulator.issuerGroup | string | `"cert-manager.io"` |  |
 | simulator.issuerKind | string | `"Issuer"` |  |
 | simulator.issuerName | string | `"adcs-sim-issuer"` |  |
