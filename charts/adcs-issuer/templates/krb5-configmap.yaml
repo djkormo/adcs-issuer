@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "chart.fullname" . }}-krb5-config
+  namespace: {{ .Release.Namespace }}
   labels:
     app: {{ include "chart.name" . }}
     chart: {{ include "chart.chart" . }}
