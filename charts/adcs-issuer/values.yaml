@@ -21,7 +21,7 @@ controllerManager:
         memory: 500Mi
       requests:
         cpu: 100m
-        memory: 100Mi
+        memory: 120Mi
 
     # @section Liveness Probe
     # Liveness probe configuration to check if the container is running.
