@@ -1,0 +1,23 @@
+{{- if .Values.controllerManager.networkPolicy.enabled }}
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: network-policy
+  namespace: {{ .Release.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      control-plane: {{- include "chart.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          control-plane: {{- include "chart.selectorLabels" . | nindent 6 }}
+    - podSelector:
+        matchLabels:
+          control-plane: {{- include "chart.selectorLabels" . | nindent 6 }}
+
+{{- end }}          
