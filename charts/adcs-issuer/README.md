@@ -7,8 +7,8 @@ ADCS Issuer plugin for cert-manager.
 ### Chart Details
 
 - **Chart Name:** adcs-issuer
-- **Version:** ![Version: 2.1.5](https://img.shields.io/badge/Version-2.1.5-informational?style=flat-square)
-- **App Version:** ![AppVersion: 2.1.5](https://img.shields.io/badge/AppVersion-2.1.5-informational?style=flat-square)
+- **Version:** ![Version: 2.1.6](https://img.shields.io/badge/Version-2.1.6-informational?style=flat-square)
+- **App Version:** ![AppVersion: 2.1.6](https://img.shields.io/badge/AppVersion-2.1.6-informational?style=flat-square)
 - **Chart Type:** ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 **Homepage:** <https://github.com/djkormo/adcs-issuer>
@@ -39,8 +39,10 @@ Kubernetes: `>=1.16.0-0`
 | controllerManager.environment.ENABLE_DEBUG | string | `"false"` |  |
 | controllerManager.environment.ENABLE_WEBHOOKS | string | `"false"` |  |
 | controllerManager.environment.KUBERNETES_CLUSTER_DOMAIN | string | `"cluster.local"` |  |
+| controllerManager.kerberosAuthentication.enabled | bool | `false` |  |
+| controllerManager.kerberosAuthentication.krb5Config | string | `"[libdefaults]\n  default_realm = EXAMPLE.COM\n  dns_lookup_kdc = true\n\n[realms]\n  EXAMPLE.COM  = {\n    kdc = dc01.example.com\n  }\n\n[domain_realm]\n  .example.com = EXAMPLE.COM\n  example.com = EXAMPLE.COM\n"` |  |
 | controllerManager.manager.image.repository | string | `"djkormo/adcs-issuer"` |  |
-| controllerManager.manager.image.tag | string | `"2.1.2"` |  |
+| controllerManager.manager.image.tag | string | `"2.1.6"` |  |
 | controllerManager.manager.livenessProbe.httpGet.path | string | `"/healthz"` |  |
 | controllerManager.manager.livenessProbe.httpGet.port | int | `8081` |  |
 | controllerManager.manager.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
