@@ -8,5 +8,5 @@ home: https://github.com/djkormo/adcs-issuer
 sources:
   - https://github.com/djkormo/adcs-issuer
   - https://djkormo.github.io/adcs-issuer/
-kubeVersion: ">=1.16.0-0"
+kubeVersion: ">=1.27.0-0"
 
