@@ -20,7 +20,7 @@ ADCS Issuer plugin for cert-manager.
 
 ## Requirements
 
-Kubernetes: `>=1.16.0-0`
+Kubernetes: `>=1.27.0-0`
 
 ## Values
 
@@ -57,7 +57,7 @@ Kubernetes: `>=1.16.0-0`
 | controllerManager.manager.resources.limits.cpu | string | `"100m"` |  |
 | controllerManager.manager.resources.limits.memory | string | `"500Mi"` |  |
 | controllerManager.manager.resources.requests.cpu | string | `"100m"` |  |
-| controllerManager.manager.resources.requests.memory | string | `"100Mi"` |  |
+| controllerManager.manager.resources.requests.memory | string | `"120Mi"` |  |
 | controllerManager.rbac.certManagerNamespace | string | `"cert-manager"` |  |
 | controllerManager.rbac.certManagerServiceAccountName | string | `"cert-manager"` |  |
 | controllerManager.rbac.enabled | bool | `true` |  |
