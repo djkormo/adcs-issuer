@@ -3,7 +3,7 @@ description: Help us improve by reporting a bug
 title: "[BUG]"
 labels:
 - bug
-assignees:
+assignees: []
 body:
 - type: textarea
   id: describe-bug
