@@ -2,8 +2,8 @@ apiVersion: v2
 name: adcs-issuer
 description: ADCS Issuer plugin for cert-manager.
 type: application
-version: 2.1.7
-appVersion: "2.1.7"
+version: 2.1.6
+appVersion: "2.1.6"
 home: https://github.com/djkormo/adcs-issuer
 sources:
   - https://github.com/djkormo/adcs-issuer
