@@ -258,21 +258,19 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	body, err := io.ReadAll(res.Body)
 
-	log.Info("Body", "body", body)
-
-	if res.Header.Get("Content-type") == ct_pkix {
-		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
-		return Ready, string(body), "none", nil
-	}
-	if err != nil {
-		log.Error(err, "Cannot read ADCS Certserv response")
-		return certStatus, "", "", err
-	}
-
 	bodyString := string(body)
 
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Body", "body", bodyString)
+	}
+
+	if res.Header.Get("Content-type") == ct_pkix {
+		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
+		return Ready, bodyString, "none", nil
+	}
+	if err != nil {
+		log.Error(err, "Cannot read ADCS Certserv response")
+		return certStatus, "", "", err
 	}
 
 	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
