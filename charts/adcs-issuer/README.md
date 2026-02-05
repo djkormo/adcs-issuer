@@ -7,8 +7,8 @@ ADCS Issuer plugin for cert-manager.
 ### Chart Details
 
 - **Chart Name:** adcs-issuer
-- **Version:** ![Version: 2.1.6](https://img.shields.io/badge/Version-2.1.6-informational?style=flat-square)
-- **App Version:** ![AppVersion: 2.1.6](https://img.shields.io/badge/AppVersion-2.1.6-informational?style=flat-square)
+- **Version:** ![Version: 2.2.0](https://img.shields.io/badge/Version-2.2.0-informational?style=flat-square)
+- **App Version:** ![AppVersion: 2.2.0](https://img.shields.io/badge/AppVersion-2.2.0-informational?style=flat-square)
 - **Chart Type:** ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 **Homepage:** <https://github.com/djkormo/adcs-issuer>
@@ -20,7 +20,7 @@ ADCS Issuer plugin for cert-manager.
 
 ## Requirements
 
-Kubernetes: `>=1.16.0-0`
+Kubernetes: `>=1.27.0-0`
 
 ## Values
 
@@ -42,7 +42,7 @@ Kubernetes: `>=1.16.0-0`
 | controllerManager.kerberosAuthentication.enabled | bool | `false` |  |
 | controllerManager.kerberosAuthentication.krb5Config | string | `"[libdefaults]\n  default_realm = EXAMPLE.COM\n  dns_lookup_kdc = true\n\n[realms]\n  EXAMPLE.COM  = {\n    kdc = dc01.example.com\n  }\n\n[domain_realm]\n  .example.com = EXAMPLE.COM\n  example.com = EXAMPLE.COM\n"` |  |
 | controllerManager.manager.image.repository | string | `"djkormo/adcs-issuer"` |  |
-| controllerManager.manager.image.tag | string | `"2.1.6"` |  |
+| controllerManager.manager.image.tag | string | `"2.2.0"` |  |
 | controllerManager.manager.livenessProbe.httpGet.path | string | `"/healthz"` |  |
 | controllerManager.manager.livenessProbe.httpGet.port | int | `8081` |  |
 | controllerManager.manager.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
@@ -57,7 +57,7 @@ Kubernetes: `>=1.16.0-0`
 | controllerManager.manager.resources.limits.cpu | string | `"100m"` |  |
 | controllerManager.manager.resources.limits.memory | string | `"500Mi"` |  |
 | controllerManager.manager.resources.requests.cpu | string | `"100m"` |  |
-| controllerManager.manager.resources.requests.memory | string | `"100Mi"` |  |
+| controllerManager.manager.resources.requests.memory | string | `"120Mi"` |  |
 | controllerManager.rbac.certManagerNamespace | string | `"cert-manager"` |  |
 | controllerManager.rbac.certManagerServiceAccountName | string | `"cert-manager"` |  |
 | controllerManager.rbac.enabled | bool | `true` |  |
