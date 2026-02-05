@@ -62,6 +62,21 @@ entries:
     - https://github.com/djkormo/adcs-issuer/releases/download/adcs-issuer-3.0.0/adcs-issuer-3.0.0.tgz
     version: 3.0.0
   - apiVersion: v2
+    appVersion: 2.2.0
+    created: "2026-02-05T20:30:49.792307983Z"
+    description: ADCS Issuer plugin for cert-manager.
+    digest: b3154728c08543f49825ffff118f4211e8a3962392e251cb10e28ef1ad3dcdf2
+    home: https://github.com/djkormo/adcs-issuer
+    kubeVersion: '>=1.27.0-0'
+    name: adcs-issuer
+    sources:
+    - https://github.com/djkormo/adcs-issuer
+    - https://djkormo.github.io/adcs-issuer/
+    type: application
+    urls:
+    - https://github.com/djkormo/adcs-issuer/releases/download/adcs-issuer-2.2.0/adcs-issuer-2.2.0.tgz
+    version: 2.2.0
+  - apiVersion: v2
     appVersion: 2.1.5
     created: "2025-12-18T22:01:17.514738814Z"
     description: ADCS Issuer plugin for cert-manager.
@@ -176,4 +191,4 @@ entries:
     urls:
     - https://github.com/djkormo/adcs-issuer/releases/download/adcs-issuer-2.0.4/adcs-issuer-2.0.4.tgz
     version: 2.0.4
-generated: "2025-12-18T22:01:17.514854269Z"
+generated: "2026-02-05T20:30:49.792420329Z"
