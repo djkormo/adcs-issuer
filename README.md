@@ -47,7 +47,12 @@ Build statuses:
 ## Description
 
 ### Requirements
-ADCS Issuer has been tested with cert-manager v1.9.x and v.12.x and currently supports CertificateRequest CRD API version v1 only.
+In the past ADCS Issuer has been tested with cert-manager v1.9.x and v.12.x and currently supports CertificateRequest CRD API version v1 only.
+
+### NOTE! At present only supported cert-manager versions are supported by adcs-issuer maintaners.
+https://cert-manager.io/docs/releases/
+
+<img width="1473" height="357" alt="obraz" src="https://github.com/user-attachments/assets/e76c43eb-a4ff-4734-b9ba-6e56e9ed5980" />
 
 
 ## Installation
@@ -69,14 +74,18 @@ helm search repo cert-manager
 helm search repo cert-manager --versions | grep v1.
 ```
 ```console
-helm install \
+helm upgrade  --install \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
-  --version v1.12.6  \
-  --set installCRDs=true
-```
+  --version v1.18.3  \
+  --set config.enableGatewayAPI=false \
+  --set config.apiVersion="controller.config.cert-manager.io/v1alpha1" \
+  --set config.kind="ControllerConfiguration" \
+  --set crds.enabled=true \
+  --set enableCertificateOwnerRef=false
 
+```
 
 
 ### Install  adcs-issuer via helm chart
@@ -946,4 +955,5 @@ adcsrequest.adcs.certmanager.csf.nokia.com/adcs-sim-cert-2v677       ready
 ## License
 
 This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/djkormo/adcs-issuer/blob/master/LICENSE).
+
 
