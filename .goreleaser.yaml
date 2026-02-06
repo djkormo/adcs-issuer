@@ -8,6 +8,7 @@ project_name: adcs-issuer
 git:
   ignore_tags:
     - helm/*
+    - adcs/*
 
 builds:
   - env:
