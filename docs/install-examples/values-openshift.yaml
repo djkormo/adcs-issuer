@@ -1,0 +1,291 @@
+# @section CRDs
+# Whether to install Custom Resource Definitions (CRDs).
+crd:
+  install: true
+
+openshift:
+  enabled: true  
+
+# @section ADCS Issuer Controller Manager
+controllerManager:
+
+  # @section Image
+  # Image settings for the ADCS Issuer manager.
+  manager:
+    image:
+      repository: djkormo/adcs-issuer  # The repository for the ADCS Issuer Docker image.
+      tag: 2.2.0                       # The tag for the ADCS Issuer Docker image.
+    
+    # @section Resources
+    # Resource requests and limits for the ADCS Issuer container.
+    resources:
+      limits:
+        cpu: 100m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 120Mi
+
+    # @section Liveness Probe
+    # Liveness probe configuration to check if the container is running.
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+        scheme: HTTP
+      timeoutSeconds: 10
+      periodSeconds: 10
+
+    # @section Readiness Probe
+    # Readiness probe configuration to check if the container is ready to serve requests.
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8081 
+        scheme: HTTP
+      timeoutSeconds: 20
+      periodSeconds: 20
+      initialDelaySeconds: 10
+
+  # @section RBAC
+  # Role-Based Access Control (RBAC) settings for the controller manager.
+  rbac:
+    enabled: true                        # Enable or disable RBAC.
+    serviceAccountName: adcs-issuer      # The name of the service account used by the controller manager.
+    certManagerNamespace: cert-manager   # The namespace where cert-manager is installed.
+    certManagerServiceAccountName: cert-manager  # The service account name for cert-manager.
+
+  # @section Replicas
+  # Number of replicas for the controller manager deployment.
+  replicas: 1
+
+  # @section KerberosAuthentication
+  # setting to configure kerberos auth instead of ntlm
+  kerberosAuthentication:
+    enabled: false 
+    krb5Config: |
+      [libdefaults]
+        default_realm = EXAMPLE.COM
+        dns_lookup_kdc = true
+
+      [realms]
+        EXAMPLE.COM  = {
+          kdc = dc01.example.com
+        }
+
+      [domain_realm]
+        .example.com = EXAMPLE.COM
+        example.com = EXAMPLE.COM
+
+  # @section Environment Variables
+  # Environment variables for the controller manager.
+  environment:
+    KUBERNETES_CLUSTER_DOMAIN: cluster.local  # Kubernetes cluster domain.
+    ENABLE_WEBHOOKS: "false"                  # Enable or disable webhooks.
+    ENABLE_DEBUG: "false"                     # Enable or disable debug mode.
+  # @section Arguments
+  # Command-line arguments for the controller manager.
+  arguments:
+    enable-leader-election: "true"            # Enable leader election for high availability.
+    cluster-resource-namespace: adcs-issuer   # Namespace for cluster resources.
+    zap-log-level: 5                          # Logging level for zap logger.
+    disable-approved-check: "false"           # Disable approved check.
+
+  # @section Security Context
+  # Security context for the controller manager pods.
+  securityContext:
+    runAsUser: 1000 
+    fsGroup: 1000
+    
+  #  .Values.controllerManager.podSecurityContext.fsGroup                          # User ID to run the container as.
+
+  # @section Affinity
+  # Affinity settings for scheduling the controller manager pods.
+  affinity:
+    nodeAffinity: {}                          # Node affinity rules for the simulator pods.
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #     - matchExpressions:
+    #       - key: kubernetes.io/e2e-az-name
+    #         operator: In
+    #         values:
+    #         - e2e-az1
+    #         - e2e-az2
+    podAffinity: {}                           # Pod affinity rules for the simulator pods.
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      # - labelSelector:
+      #     matchExpressions:
+      #     - key: security
+      #       operator: In
+      #       values:
+      #       - S1
+      #   topologyKey: "kubernetes.io/hostname"
+    podAntiAffinity: {}                       # Pod anti-affinity rules for the simulator pods.
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #       - key: app
+      #         operator: In
+      #         values:
+      #         - "my-app"
+      #     topologyKey: "kubernetes.io/hostname"
+
+  # @section Webhooks
+  # Enable or disable webhooks and CA certificates.
+  enabledWebHooks: false                      # Enable or disable webhooks.
+  enabledCaCerts: false                       # Enable or disable mounting CA certificates.
+  caCertsSecretName: ca-certificates          # Name of the secret containing CA certificates.
+
+# @section Metrics Service
+# Service configuration for exposing metrics.
+metricsService:
+  enabled: true                               # Enable or disable the metrics service.
+  nameOverride: null                          # Override the name of the metrics service.
+  serviceMonitor:
+    enabled: true                             # Create a Prometheus ServiceMonitor.
+    scheme: http                              # Scheme to use when scraping - http or https
+  ports:
+  - name: http
+    port: 8080
+    targetPort: metrics
+  type: ClusterIP                             # Type of Kubernetes service.
+
+# @section Webhook Service
+# Service configuration for webhooks.
+webhookService:
+  ports:
+  - port: 443
+    targetPort: 9443
+  type: ClusterIP                             # Type of Kubernetes service.
+
+# @section Node Selector
+# Node selector configuration for the controller manager pods.
+nodeSelector: {}
+
+# @section ADCS Simulator
+# Configuration for the ADCS Simulator.
+simulator:
+  enabled: false                              # Enable or disable the ADCS Simulator.
+  clusterIssuserName: adcs-sim-adcsclusterissuer  # Name of the ClusterIssuer for the simulator.
+  deploymentName: adcs-sim-deployment         # Name of the deployment for the simulator.
+  configMapName: adcs-sim-configmap           # Name of the config map for the simulator.
+  secretCertificateName: adcs-sim-certificate-secret  # Name of the secret for simulator certificates.
+  secretName: adcs-sim-secret                 # Name of the secret for simulator credentials.
+  serviceName: adcs-sim-service               # Name of the service for the simulator.
+
+  # @section Certificate
+  # Certificate settings for the simulator, managed by cert-manager.
+  issuerName: adcs-sim-issuer                 # Name of the cert-manager issuer to use.
+  issuerKind: Issuer                          # Kind of the cert-manager issuer (Issuer or ClusterIssuer).
+  issuerGroup: cert-manager.io                # API group of the issuer.
+  certificateDuration: 2160h                  # Duration of the certificate validity (default: 90 days).
+  certificateRenewBefore: 360h                # When to renew the certificate before expiry (default: 15 days).
+  caBundle: ""                               # CA bundle for the certificate.
+
+  # @section Image
+  # Image settings for the ADCS Simulator.
+  image:
+    repository: djkormo/adcs-sim              # The repository for the ADCS Simulator Docker image.
+    tag: 0.0.6                                # The tag for the ADCS Simulator Docker image.
+
+  # @section Environment Variables
+  # Environment variables for the simulator.
+  environment:
+    ENABLE_DEBUG: "false"                     # Enable or disable debug mode.
+
+  # @section Arguments
+  # Command-line arguments for the simulator.
+  arguments:
+    dns: adcs-sim-service.adcs-issuer.svc,adcs2.example.com  # DNS names for the simulator.
+    ips: 10.10.10.1,10.10.10.2                               # IP addresses for the simulator.
+    port: 8443                                               # Port number for the simulator.
+
+  # @section Ports
+  # Port settings for the simulator container and service.
+  containerPort: 8443                        # Port number for the simulator container.
+  servicePort: 8443                          # Port number for the simulator service.
+
+  # @section Liveness Probe
+  # Liveness probe configuration to check if the simulator container is running.
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8443                              # The same as containerPort
+      scheme: HTTPS
+    timeoutSeconds: 10
+    periodSeconds: 10
+
+  # @section Readiness Probe
+  # Readiness probe configuration to check if the simulator container is ready to serve requests.
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 8443                              # The same as containerPort
+      scheme: HTTPS
+    timeoutSeconds: 20
+    periodSeconds: 20
+    initialDelaySeconds: 10
+
+  # @section Pod Security Context
+  # Security context for the simulator pods.
+  podSecurityContext:
+    runAsUser: 1000                           # User ID to run the container as.
+
+  # @section Container Security Context
+  # Security context for the simulator containers.
+  containerSecurityContext:
+    allowPrivilegeEscalation: false           # Disallow privilege escalation.
+    readOnlyRootFilesystem: true              # Set root filesystem as read-only.
+    capabilities:
+      drop:
+      - ALL                                   # Drop all capabilities.
+
+  # @section Affinity
+  # Affinity settings for scheduling the simulator pods.
+  affinity:
+    nodeAffinity: {}                          # Node affinity rules for the simulator pods.
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #     - matchExpressions:
+    #       - key: kubernetes.io/e2e-az-name
+    #         operator: In
+    #         values:
+    #         - e2e-az1
+    #         - e2e-az2
+    podAffinity: {}                           # Pod affinity rules for the simulator pods.
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      # - labelSelector:
+      #     matchExpressions:
+      #     - key: security
+      #       operator: In
+      #       values:
+      #       - S1
+      #   topologyKey: "kubernetes.io/hostname"
+    podAntiAffinity: {}                       # Pod anti-affinity rules for the simulator pods.
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #       - key: app
+      #         operator: In
+      #         values:
+      #         - "my-app"
+      #     topologyKey: "kubernetes.io/hostname"
+
+
+  # @section Resources
+  # Resource requests and limits for the simulator container.
+  resources:
+    limits:
+      cpu: 100m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+
+  # @section Example Certificate
+  # Configuration for an example certificate used by the simulator.
+  exampleCertificate:
+    enabled: true                             # Enable or disable the example certificate.
+    name: adcs-sim-certificate                # Name of the example certificate.

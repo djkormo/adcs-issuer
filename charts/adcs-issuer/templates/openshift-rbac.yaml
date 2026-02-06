@@ -1,0 +1,90 @@
+{{- if  .Values.openshift }}
+
+{{- if and .Values.openshift.enabled (not .Values.openshift.anyuid) }}
+
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: adcs-issuer-scc
+
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowHostDirVolumePlugin: false
+allowPrivilegeEscalation: false
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: MustRunAsRange # Valid value for runAsUser.type
+  uidRangeMin: {{ .Values.controllerManager.securityContext.runAsUser }}
+  uidRangeMax: {{ .Values.controllerManager.securityContext.runAsUser }}
+seLinuxContext:
+  type: MustRunAs # Valid value for seLinuxContext.type
+seccompProfiles:
+  - runtime/default
+
+fsGroup:
+  type: MustRunAs
+  ranges:
+    - min: {{ .Values.controllerManager.securityContext.fsGroup | default 1000 }}
+      max: {{ .Values.controllerManager.securityContext.fsGroup | default 1000 }}
+supplementalGroups:
+  type: MustRunAs
+  ranges:
+    - min: {{ .Values.controllerManager.securityContext.fsGroup | default 1000 }}
+      max: {{ .Values.controllerManager.securityContext.fsGroup | default 1000 }}
+readOnlyRootFilesystem: true
+volumes:
+  - configMap
+  - emptyDir
+  - projected
+  - secret
+  - downwardAPI
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: adcs-issuer-scc
+rules:
+- apiGroups:
+  - security.openshift.io 
+  resourceNames:
+  - adcs-issuer-scc 
+  resources:
+  - securitycontextconstraints 
+  verbs: 
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: adcs-issuer-scc-binding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: adcs-issuer-scc
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.controllerManager.rbac.serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
+{{- end  }} 
+---
+{{- if and .Values.openshift.enabled .Values.openshift.anyuid }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: scc-anyuid
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:anyuid
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.controllerManager.rbac.serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
+
+{{- end  }} 
+{{- end  }} 

@@ -37,7 +37,7 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 		},
 	}
 	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification start", "username", username, "password", password, "url", url)
+		log.Info("NTLM verification start", "username", username, "url", url)
 	}
 	if username != "" && password != "" {
 		// Set up NTLM authentication
@@ -73,7 +73,7 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 		}
 	}
 	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("NTLM verification stop", "username", username, "password", password, "url", url)
+		log.Info("NTLM verification stop", "username", username, "url", url)
 	}
 	return c, nil
 }
@@ -258,21 +258,19 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	body, err := io.ReadAll(res.Body)
 
-	log.Info("Body", "body", body)
-
-	if res.Header.Get("Content-type") == ct_pkix {
-		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
-		return Ready, string(body), "none", nil
-	}
-	if err != nil {
-		log.Error(err, "Cannot read ADCS Certserv response")
-		return certStatus, "", "", err
-	}
-
 	bodyString := string(body)
 
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("Body", "body", bodyString)
+	}
+
+	if res.Header.Get("Content-type") == ct_pkix {
+		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
+		return Ready, bodyString, "none", nil
+	}
+	if err != nil {
+		log.Error(err, "Cannot read ADCS Certserv response")
+		return certStatus, "", "", err
 	}
 
 	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
@@ -317,7 +315,7 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	req.Header.Set("User-agent", "Mozilla")
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("obtainCaCertificate start", "req", req, "url", url)
-		log.Info("obtainCaCertificate start", "password", s.password, "username", s.username)
+		log.Info("obtainCaCertificate start", "username", s.username)
 	}
 	res1, err := s.httpClient.Do(req)
 

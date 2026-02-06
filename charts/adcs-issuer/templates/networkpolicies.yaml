@@ -1,3 +1,4 @@
+{{- if .Values.controllerManager.networkPolicy  }}
 {{- if .Values.controllerManager.networkPolicy.enabled }}
 
 apiVersion: networking.k8s.io/v1
@@ -20,4 +21,5 @@ spec:
         matchLabels:
           control-plane: {{- include "chart.selectorLabels" . | nindent 6 }}
 
-{{- end }}          
+{{- end }}  
+{{- end }}        
