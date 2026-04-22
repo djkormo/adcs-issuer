@@ -71,6 +71,7 @@ func (in *AdcsIssuerList) DeepCopyObject() runtime.Object {
 func (in *AdcsIssuerSpec) DeepCopyInto(out *AdcsIssuerSpec) {
 	*out = *in
 	out.CredentialsRef = in.CredentialsRef
+	out.CABundleRef = in.CABundleRef
 	if in.CABundle != nil {
 		in, out := &in.CABundle, &out.CABundle
 		*out = make([]byte, len(*in))
@@ -261,6 +262,7 @@ func (in *ClusterAdcsIssuerList) DeepCopyObject() runtime.Object {
 func (in *ClusterAdcsIssuerSpec) DeepCopyInto(out *ClusterAdcsIssuerSpec) {
 	*out = *in
 	out.CredentialsRef = in.CredentialsRef
+	out.CABundleRef = in.CABundleRef
 	if in.CABundle != nil {
 		in, out := &in.CABundle, &out.CABundle
 		*out = make([]byte, len(*in))

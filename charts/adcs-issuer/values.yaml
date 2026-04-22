@@ -56,11 +56,12 @@ controllerManager:
     readinessProbe:
       httpGet:
         path: /readyz
-        port: 8081 
+        port: 8081
         scheme: HTTP
       timeoutSeconds: 20
       periodSeconds: 20
       initialDelaySeconds: 10
+
 
   # @section RBAC
   # Role-Based Access Control (RBAC) settings for the controller manager.
@@ -110,6 +111,10 @@ controllerManager:
   # Security context for the controller manager pods.
   securityContext:
     runAsUser: 1000                           # User ID to run the container as.
+
+  # @section Priority Class
+  # Defines the priority class for the controller manager pods
+  priorityClassName: null
 
   # @section Affinity
   # Affinity settings for scheduling the controller manager pods.

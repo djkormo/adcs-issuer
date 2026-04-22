@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-logr/logr"
 	core "k8s.io/api/core/v1"
-	"k8s.io/klog"
 
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,13 +31,10 @@ type AdcsRequestReconciler struct {
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests/status,verbs=get;update;patch
 
 func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := ctrl.LoggerFrom(ctx).WithValues("adcsrequest", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx).WithValues("AdcsRequest", req.NamespacedName)
 
 	// your logic here
-	log.Info("Processing request")
-	if klog.V(3) {
-		klog.Infof("requesting to template: %v", r.IssuerFactory.AdcsTemplateName)
-	}
+	log.Info("requesting to template", "template", r.IssuerFactory.AdcsTemplateName)
 
 	// Fetch the AdcsRequest resource being reconciled
 	ar := new(api.AdcsRequest)
@@ -52,7 +48,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	}
 
-	log.V(3).Info("Running request", "Processing request", req.Name)
+	log.Info("Running request", "request", req.Name)
 
 	// Find the issuer
 	issuer, err := r.IssuerFactory.GetIssuer(ctx, ar.Spec.IssuerRef, ar.Namespace)
@@ -61,9 +57,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	if log.V(3).Enabled() {
-		log.V(3).Info("Running request", "template", issuer.AdcsTemplateName)
-	}
+	log.Info("Running request", "template", issuer.AdcsTemplateName)
 
 	cert, caCert, err := issuer.Issue(ctx, ar)
 	if err != nil {
@@ -72,6 +66,10 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// to re-try later.
 		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+	}
+
+	if len(caCert) == 0 {
+		log.Info("unable to get caCert from issuer");
 	}
 
 	// Get the original CertificateRequest to set result in
@@ -98,6 +96,8 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		if caCert != nil {
 			combinedCert = append(cert, caCert...)
 		}
+
+		cr.Status.CA = caCert
 		cr.Status.Certificate = combinedCert
 
 		if log.V(5).Enabled() {
