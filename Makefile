@@ -80,7 +80,18 @@ issuers/testdata/ca:
 
 .PHONY: test
 test: manifests generate fmt vet envtest issuers/testdata/ca ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out
+	# main.go (the root package) is excluded from coverage measurement since it is manager
+	# bootstrap/wiring rather than unit-testable logic; it is still built/vetted elsewhere.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test $$(go list ./... | grep -v /e2e | grep -v '^$(PROJECT)$$') -coverprofile cover.out
+
+# Minimum total coverage (percentage) required by `make coverage`.
+COVERAGE_THRESHOLD ?= 75
+
+.PHONY: coverage
+coverage: test ## Run tests and fail if total coverage is below COVERAGE_THRESHOLD (default 75%).
+	@total=$$(go tool cover -func=cover.out | tail -1 | awk '{print $$3}' | tr -d '%'); \
+	echo "Total coverage: $${total}% (threshold: $(COVERAGE_THRESHOLD)%)"; \
+	awk -v t="$$total" -v th="$(COVERAGE_THRESHOLD)" 'BEGIN { exit (t+0 < th+0) }' || { echo "FAIL: coverage $${total}% is below threshold $(COVERAGE_THRESHOLD)%"; exit 1; }
 
 # Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.
 .PHONY: test-e2e  # Run the e2e tests against a Kind k8s instance that is spun up.
@@ -248,10 +259,10 @@ GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
+CONTROLLER_TOOLS_VERSION ?= v0.21.0
 ENVTEST_VERSION ?= latest
 #GOLANGCI_LINT_VERSION ?= v1.58.2 
-GOLANGCI_LINT_VERSION ?= v2.7.2 
+GOLANGCI_LINT_VERSION ?= v2.13.2 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
