@@ -21,7 +21,7 @@ Detailed documentation can be found in the [docs folder](./docs/README.md) or on
 
 ## Verifying container images
 
-Released container images (e.g. `ghcr.io/scoobed/adcs-issuer`) are signed with
+Released container images (e.g. `ghcr.io/djkormo/adcs-issuer`) are signed with
 [`cosign`](https://github.com/sigstore/cosign), and an SBOM (Software Bill of Materials, generated with
 [`syft`](https://github.com/anchore/syft) in CycloneDX format) is attached to each image as a signed attestation.
 The public key used to verify these is checked into this repository as [`cosign.pub`](./cosign.pub).
@@ -30,16 +30,16 @@ To verify the signature on an image, first resolve its digest, then verify by di
 (always verify by digest rather than by tag, since tags are mutable):
 
 ```bash
-IMG=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/scoobed/adcs-issuer:2.3.0-beta)
-# or, without pulling: IMG=$(docker buildx imagetools inspect ghcr.io/scoobed/adcs-issuer:2.3.0-beta --format '{{.Manifest.Digest}}')
+IMG=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/djkormo/adcs-issuer:2.3.0-beta)
+# or, without pulling: IMG=$(docker buildx imagetools inspect ghcr.io/djkormo/adcs-issuer:2.3.0-beta --format '{{.Manifest.Digest}}')
 
-cosign verify --key cosign.pub "ghcr.io/scoobed/adcs-issuer@<digest>"
+cosign verify --key cosign.pub "ghcr.io/djkormo/adcs-issuer@<digest>"
 ```
 
 To verify the attached SBOM attestation and extract it:
 
 ```bash
-cosign verify-attestation --key cosign.pub --type cyclonedx "ghcr.io/scoobed/adcs-issuer@<digest>" \
+cosign verify-attestation --key cosign.pub --type cyclonedx "ghcr.io/djkormo/adcs-issuer@<digest>" \
   | jq -r '.payload' | base64 -d | jq '.predicate' > sbom.cdx.json
 ```
 
