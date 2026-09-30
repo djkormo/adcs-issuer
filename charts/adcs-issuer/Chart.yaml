@@ -2,8 +2,8 @@ apiVersion: v2
 name: adcs-issuer
 description: ADCS Issuer plugin for cert-manager.
 type: application
-version: 2.2.1
-appVersion: "2.2.1"
+version: 2.2.2
+appVersion: "2.2.2"
 home: https://github.com/djkormo/adcs-issuer
 sources:
   - https://github.com/djkormo/adcs-issuer
@@ -14,18 +14,24 @@ dependencies:
 
   - name: cert-manager
     alias: cert-manager
-    version: ~v1.19.3
+    version: ~v1.21.1
     repository: https://charts.jetstack.io
     condition: cert-manager.enabled
 
   - name: cert-manager
-    alias: cert-manager-1-18
-    version: ~v1.18.5
+    alias: cert-manager-1-20
+    version: ~v1.20.3
     repository: https://charts.jetstack.io
-    condition: cert-manager-1-18.enabled  
+    condition: cert-manager-1-20.enabled
 
   - name: cert-manager
-    alias: cert-manager-1-17
-    version: ~v1.17.4
+    alias: cert-manager-1-19
+    version: ~v1.19.6
     repository: https://charts.jetstack.io
-    condition: cert-manager-1-17.enabled
+    condition: cert-manager-1-19.enabled  
+
+  - name: cert-manager
+    alias: cert-manager-1-18
+    version: ~v1.18.6
+    repository: https://charts.jetstack.io
+    condition: cert-manager-1-18.enabled
