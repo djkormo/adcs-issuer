@@ -8,13 +8,14 @@ cert-manager:
   enabled: false
   namespace: cert-manager
 
+cert-manager-1-20:
+  enabled: false
+
+cert-manager-1-19:
+  enabled: false
+
 cert-manager-1-18:
   enabled: false
-
-cert-manager-1-17:
-  enabled: false
-
-
 
 openshift:
   enabled: false  
@@ -28,7 +29,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer  # The repository for the ADCS Issuer Docker image.
-      tag: 2.2.1                       # The tag for the ADCS Issuer Docker image.
+      tag: 2.2.2                       # The tag for the ADCS Issuer Docker image.
       imagePullPolicy: Always          # The image pull policy.
     
     # @section Resources

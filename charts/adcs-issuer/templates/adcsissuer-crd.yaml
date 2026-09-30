@@ -5,7 +5,7 @@ metadata:
   name: adcsissuers.adcs.certmanager.csf.nokia.com
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "chart.fullname" . }}-
-    controller-gen.kubebuilder.io/version: v0.7.0
+    controller-gen.kubebuilder.io/version: v0.21.0
   labels:
   {{- include "chart.labels" . | nindent 4 }}
 spec:
@@ -23,14 +23,19 @@ spec:
         description: AdcsIssuer is the Schema for the adcsissuers API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -38,14 +43,16 @@ spec:
             description: AdcsIssuerSpec defines the desired state of AdcsIssuer
             properties:
               caBundle:
-                description: CABundle is a PEM encoded TLS certifiate to use to verify
-                  connections to the ADCS server.
+                description: |-
+                  CABundle is a PEM encoded TLS certifiate to use to verify connections to
+                  the ADCS server.
                 format: byte
                 type: string
               credentialsRef:
-                description: CredentialsRef is a reference to a Secret containing the
-                  username and password for the ADCS server. The secret must contain
-                  two keys, 'username' and 'password'.
+                description: |-
+                  CredentialsRef is a reference to a Secret containing the username and
+                  password for the ADCS server.
+                  The secret must contain two keys, 'username' and 'password'.
                 properties:
                   name:
                     description: Name of the referent.
@@ -54,16 +61,19 @@ spec:
                 - name
                 type: object
               retryInterval:
-                description: How often to retry in case of communication errors (in
-                  time.ParseDuration() format) Default 1 hour.
+                description: |-
+                  How often to retry in case of communication errors (in time.ParseDuration() format)
+                  Default 1 hour.
                 type: string
               statusCheckInterval:
-                description: How often to check for request status in the server (in
-                  time.ParseDuration() format) Default 6 hours.
+                description: |-
+                  How often to check for request status in the server (in time.ParseDuration() format)
+                  Default 6 hours.
                 type: string
               templateName:
-                description: Which ADCS Template should this issuer use Defaults to
-                  the what is specified in main.go or as an cli option.
+                description: |-
+                  Which ADCS Template should this issuer use
+                  Defaults to the what is specified in main.go or as an cli option.
                 type: string
               url:
                 description: URL is the base URL for the ADCS instance

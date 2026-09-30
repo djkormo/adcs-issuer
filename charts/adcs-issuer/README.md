@@ -7,8 +7,8 @@ ADCS Issuer plugin for cert-manager.
 ### Chart Details
 
 - **Chart Name:** adcs-issuer
-- **Version:** ![Version: 2.2.0](https://img.shields.io/badge/Version-2.2.0-informational?style=flat-square)
-- **App Version:** ![AppVersion: 2.2.0](https://img.shields.io/badge/AppVersion-2.2.0-informational?style=flat-square)
+- **Version:** ![Version: 2.2.2](https://img.shields.io/badge/Version-2.2.2-informational?style=flat-square)
+- **App Version:** ![AppVersion: 2.2.2](https://img.shields.io/badge/AppVersion-2.2.2-informational?style=flat-square)
 - **Chart Type:** ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 **Homepage:** <https://github.com/djkormo/adcs-issuer>
@@ -24,17 +24,20 @@ Kubernetes: `>=1.27.0-0`
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://charts.jetstack.io | cert-manager(cert-manager) | ~v1.19.3 |
-| https://charts.jetstack.io | cert-manager-1-18(cert-manager) | ~v1.18.5 |
-| https://charts.jetstack.io | cert-manager-1-17(cert-manager) | ~v1.17.4 |
+| https://charts.jetstack.io | cert-manager(cert-manager) | ~v1.21.1 |
+| https://charts.jetstack.io | cert-manager-1-20(cert-manager) | ~v1.20.3 |
+| https://charts.jetstack.io | cert-manager-1-19(cert-manager) | ~v1.19.6 |
+| https://charts.jetstack.io | cert-manager-1-18(cert-manager) | ~v1.18.6 |
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| cert-manager-1-17.enabled | bool | `false` |  |
 | cert-manager-1-18.enabled | bool | `false` |  |
+| cert-manager-1-19.enabled | bool | `false` |  |
+| cert-manager-1-20.enabled | bool | `false` |  |
 | cert-manager.enabled | bool | `false` |  |
+| cert-manager.namespace | string | `"cert-manager"` |  |
 | controllerManager.affinity.nodeAffinity | object | `{}` |  |
 | controllerManager.affinity.podAffinity | object | `{}` |  |
 | controllerManager.affinity.podAntiAffinity | object | `{}` |  |
@@ -52,7 +55,7 @@ Kubernetes: `>=1.27.0-0`
 | controllerManager.kerberosAuthentication.krb5Config | string | `"[libdefaults]\n  default_realm = EXAMPLE.COM\n  dns_lookup_kdc = true\n\n[realms]\n  EXAMPLE.COM  = {\n    kdc = dc01.example.com\n  }\n\n[domain_realm]\n  .example.com = EXAMPLE.COM\n  example.com = EXAMPLE.COM\n"` |  |
 | controllerManager.manager.image.imagePullPolicy | string | `"Always"` |  |
 | controllerManager.manager.image.repository | string | `"djkormo/adcs-issuer"` |  |
-| controllerManager.manager.image.tag | string | `"2.2.1"` |  |
+| controllerManager.manager.image.tag | string | `"2.2.2"` |  |
 | controllerManager.manager.livenessProbe.httpGet.path | string | `"/healthz"` |  |
 | controllerManager.manager.livenessProbe.httpGet.port | int | `8081` |  |
 | controllerManager.manager.livenessProbe.httpGet.scheme | string | `"HTTP"` |  |
@@ -104,7 +107,7 @@ Kubernetes: `>=1.27.0-0`
 | simulator.deploymentName | string | `"adcs-sim-deployment"` |  |
 | simulator.enabled | bool | `false` |  |
 | simulator.environment.ENABLE_DEBUG | string | `"false"` |  |
-| simulator.exampleCertificate.enabled | bool | `true` |  |
+| simulator.exampleCertificate.enabled | bool | `false` |  |
 | simulator.exampleCertificate.name | string | `"adcs-sim-certificate"` |  |
 | simulator.image.imagePullPolicy | string | `"Always"` |  |
 | simulator.image.repository | string | `"djkormo/adcs-sim"` |  |
