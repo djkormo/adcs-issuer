@@ -7,7 +7,7 @@ export $(shell sed 's/=.*//' $(dpl))
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.31.0
+ENVTEST_K8S_VERSION = 1.34.0
 
 COMMIT?=$(shell git rev-parse --short HEAD)
 BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
@@ -15,7 +15,7 @@ BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 PROJECT?=github.com/djkormo/adcs-issuer
 
 # Trivy severity level and output format
-TRIVY_SEVERITY ?= CRITICAL,HIGH
+TRIVY_SEVERITY ?= CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN
 TRIVY_FORMAT ?= table
 
 
@@ -262,7 +262,7 @@ KUSTOMIZE_VERSION ?= v5.3.0
 CONTROLLER_TOOLS_VERSION ?= v0.21.0
 ENVTEST_VERSION ?= latest
 #GOLANGCI_LINT_VERSION ?= v1.58.2 
-GOLANGCI_LINT_VERSION ?= v2.13.2 
+GOLANGCI_LINT_VERSION ?= v2.15.0 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
