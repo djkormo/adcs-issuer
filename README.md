@@ -21,6 +21,8 @@ TODO: a short summary of installing and configuring the issuer
 
 Detailed documentation can be found in the [docs folder](./docs/README.md) or on [GitHub Pages](https://djkormo.github.io/adcs-issuer).
 
+See the project here [artifacthub.io](https://artifacthub.io/packages/helm/adcs-issuer/adcs-issuer)
+
 ## Verifying container images
 
 Released container images (e.g. `ghcr.io/djkormo/adcs-issuer`) are signed with
