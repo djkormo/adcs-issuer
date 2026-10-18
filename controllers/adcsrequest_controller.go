@@ -32,7 +32,7 @@ type AdcsRequestReconciler struct {
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests/status,verbs=get;update;patch
 
 func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := ctrl.LoggerFrom(ctx).WithValues("adcsrequest", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx).WithValues("AdcsRequest", req.NamespacedName)
 
 	// your logic here
 	log.Info("Processing request")
@@ -117,6 +117,8 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		if caCert != nil {
 			combinedCert = append(cert, caCert...)
 		}
+
+		cr.Status.CA = caCert //TODO Maybe this should be injected on Certificate annotation
 		cr.Status.Certificate = combinedCert
 
 		if log.V(5).Enabled() {
