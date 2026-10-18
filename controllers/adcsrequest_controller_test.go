@@ -305,3 +305,93 @@ func TestAdcsRequestReconcile_Rejected(t *testing.T) {
 func TestAdcsRequestReconcile_Errored(t *testing.T) {
 	testTerminalState(t, api.Errored, cmapi.CertificateRequestReasonFailed, "ADCS request errored")
 }
+
+// Updating the AdcsRequest status at the end of a successful reconcile
+// re-enqueues it. That second reconcile must leave the CertificateRequest
+// alone: Issue() returns no certificate for a request that is already Ready,
+// and writing the CertificateRequest status again would remove
+// status.certificate while keeping Ready=True/Issued.
+func TestAdcsRequestReconcile_ReadyIsNotReprocessed(t *testing.T) {
+	server := newAdcsBackend(t, adcsBackendConfig{
+		certfnshBody:        "dummy-cert-bytes",
+		certfnshContentType: "application/pkix-cert",
+	})
+
+	ar := &api.AdcsRequest{
+		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Spec: api.AdcsRequestSpec{
+			CSRPEM:    []byte("csr-bytes"),
+			IssuerRef: issuerRefFor("my-issuer"),
+		},
+	}
+	cr := &cmapi.CertificateRequest{
+		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Spec: cmapi.CertificateRequestSpec{
+			Request:   []byte("csr-bytes"),
+			IssuerRef: issuerRefFor("my-issuer"),
+		},
+	}
+	fixture := newAdcsRequestFixture(t, server, ar, cr)
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"}}
+
+	_, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), req)
+	require.NoError(t, err)
+
+	issuedCR := &cmapi.CertificateRequest{}
+	require.NoError(t, fixture.client.Get(context.Background(), req.NamespacedName, issuedCR))
+	require.Contains(t, string(issuedCR.Status.Certificate), "dummy-cert-bytes")
+
+	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, res)
+
+	updatedCR := &cmapi.CertificateRequest{}
+	require.NoError(t, fixture.client.Get(context.Background(), req.NamespacedName, updatedCR))
+	assert.Equal(t, issuedCR.Status.Certificate, updatedCR.Status.Certificate)
+	assert.Equal(t, issuedCR.ResourceVersion, updatedCR.ResourceVersion)
+}
+
+// A 200 application/pkix-cert response with an empty body is parsed as Ready.
+// The CertificateRequest must not be marked Issued without a certificate; the
+// CA chain alone would otherwise be written as the certificate.
+func TestAdcsRequestReconcile_EmptyCertificateIsNotIssued(t *testing.T) {
+	server := newAdcsBackend(t, adcsBackendConfig{
+		certfnshBody:        "",
+		certfnshContentType: "application/pkix-cert",
+	})
+
+	ar := &api.AdcsRequest{
+		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Spec: api.AdcsRequestSpec{
+			CSRPEM:    []byte("csr-bytes"),
+			IssuerRef: issuerRefFor("my-issuer"),
+		},
+	}
+	cr := &cmapi.CertificateRequest{
+		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Spec: cmapi.CertificateRequestSpec{
+			Request:   []byte("csr-bytes"),
+			IssuerRef: issuerRefFor("my-issuer"),
+		},
+	}
+	fixture := newAdcsRequestFixture(t, server, ar, cr)
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"}}
+
+	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), req)
+	assert.NoError(t, err)
+	assert.True(t, res.Requeue)
+	assert.Equal(t, time.Second, res.RequeueAfter)
+
+	updatedCR := &cmapi.CertificateRequest{}
+	require.NoError(t, fixture.client.Get(context.Background(), req.NamespacedName, updatedCR))
+	assert.Empty(t, updatedCR.Status.Certificate)
+	for _, cond := range updatedCR.Status.Conditions {
+		if cond.Type == cmapi.CertificateRequestConditionReady {
+			assert.NotEqual(t, cmapi.CertificateRequestReasonIssued, cond.Reason)
+		}
+	}
+
+	updatedAR := &api.AdcsRequest{}
+	require.NoError(t, fixture.client.Get(context.Background(), req.NamespacedName, updatedAR))
+	assert.Equal(t, api.Unknown, updatedAR.Status.State)
+}

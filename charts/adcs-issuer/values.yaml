@@ -29,7 +29,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer  # The repository for the ADCS Issuer Docker image.
-      tag: 2.2.2                       # The tag for the ADCS Issuer Docker image.
+      tag: 2.2.3                       # The tag for the ADCS Issuer Docker image.
       imagePullPolicy: Always          # The image pull policy.
     
     # @section Resources
