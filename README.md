@@ -2,6 +2,8 @@
 
 ![Badge1](https://github.com/djkormo/adcs-issuer/actions/workflows/test.yaml/badge.svg) ![Badge2](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml/badge.svg) ![Badge3](https://github.com/djkormo/adcs-issuer/actions/workflows/release.yaml/badge.svg) ![Badge4](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-test.yaml/badge.svg) ![Badge5](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-release.yaml/badge.svg) [![trivy](https://github.com/djkormo/adcs-issuer/actions/workflows/trivy.yml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/trivy.yml) 
 
+**Please do not use helm charts versions 3.x.y. The code is broken. Use only stable 2.x.y releases**
+
 ADCS Issuer is a [Kubernetes](https://kubernetes.io/) [`cert-manager`](https://cert-manager.io)
 [`CertificateRequest`](https://cert-manager.io/docs/concepts/certificaterequest/) controller
 that uses [Microsoft Active Directory Certificate Services](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/active-directory-certificate-services-overview)
