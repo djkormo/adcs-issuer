@@ -123,7 +123,7 @@ func main() {
 
 	certificateRequestReconciler := &controllers.CertificateRequestReconciler{
 		Client:   mgr.GetClient(),
-		Recorder: mgr.GetEventRecorderFor("adcs-certificaterequests-controller"),
+		Recorder: mgr.GetEventRecorder("adcs-certificaterequests-controller"),
 
 		Clock:                  clock.RealClock{},
 		CheckApprovedCondition: !disableApprovedCheck,
@@ -141,7 +141,7 @@ func main() {
 			ClusterResourceNamespace: clusterResourceNamespace,
 			AdcsTemplateName:         adcsTemplateName,
 		},
-		Recorder:                     mgr.GetEventRecorderFor("adcs-requests-controller"),
+		Recorder:                     mgr.GetEventRecorder("adcs-requests-controller"),
 		CertificateRequestController: certificateRequestReconciler,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AdcsRequest")

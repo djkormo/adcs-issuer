@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	clocktesting "k8s.io/utils/clock/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +45,7 @@ func newCertificateRequestReconciler(objs ...client.Object) (*CertificateRequest
 
 	r := &CertificateRequestReconciler{
 		Client:                 fakeClient,
-		Recorder:               record.NewFakeRecorder(10),
+		Recorder:               events.NewFakeRecorder(10),
 		Clock:                  clocktesting.NewFakeClock(time.Now()),
 		CheckApprovedCondition: false,
 	}

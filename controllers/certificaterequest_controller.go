@@ -15,14 +15,14 @@ import (
 	core "k8s.io/api/core/v1"
 	apimacherrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/klog"
+	"sigs.k8s.io/controller-runtime/pkg/recorder"
 )
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
 type CertificateRequestReconciler struct {
 	client.Client
-	Recorder record.EventRecorder
+	Recorder recorder.EventRecorder
 
 	Clock                  clock.Clock
 	CheckApprovedCondition bool
@@ -213,7 +213,7 @@ func (r *CertificateRequestReconciler) SetStatus(ctx context.Context, cr *cmapi.
 	if status == cmmeta.ConditionFalse {
 		eventType = core.EventTypeWarning
 	}
-	r.Recorder.Event(cr, eventType, reason, completeMessage)
+	r.Recorder.Eventf(cr, nil, eventType, reason, "Reconcile", completeMessage)
 
 	return r.Status().Update(ctx, cr)
 }

@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	clocktesting "k8s.io/utils/clock/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -116,7 +116,7 @@ func newAdcsRequestFixture(t *testing.T, server *httptest.Server, objs ...client
 
 	certReconciler := &CertificateRequestReconciler{
 		Client:                 fakeClient,
-		Recorder:               record.NewFakeRecorder(10),
+		Recorder:               events.NewFakeRecorder(10),
 		Clock:                  clocktesting.NewFakeClock(time.Now()),
 		CheckApprovedCondition: false,
 	}
@@ -128,7 +128,7 @@ func newAdcsRequestFixture(t *testing.T, server *httptest.Server, objs ...client
 			Client:           fakeClient,
 			AdcsTemplateName: "test",
 		},
-		Recorder:                     record.NewFakeRecorder(10),
+		Recorder:                     events.NewFakeRecorder(10),
 		CertificateRequestController: certReconciler,
 	}
 
@@ -248,7 +248,6 @@ func TestAdcsRequestReconcile_Pending(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.True(t, res.Requeue)
 	assert.Equal(t, time.Second, res.RequeueAfter)
 
 	updatedAR := &api.AdcsRequest{}
@@ -379,7 +378,6 @@ func TestAdcsRequestReconcile_EmptyCertificateIsNotIssued(t *testing.T) {
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), req)
 	assert.NoError(t, err)
-	assert.True(t, res.Requeue)
 	assert.Equal(t, time.Second, res.RequeueAfter)
 
 	updatedCR := &cmapi.CertificateRequest{}

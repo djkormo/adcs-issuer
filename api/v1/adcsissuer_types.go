@@ -68,7 +68,3 @@ type AdcsIssuerList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []AdcsIssuer `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&AdcsIssuer{}, &AdcsIssuerList{})
-}
