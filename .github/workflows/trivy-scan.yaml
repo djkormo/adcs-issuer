@@ -45,17 +45,17 @@ jobs:
 
       - name: Pull the image for the architecture we're testing
         run: |
-          docker pull --platform ${{ matrix.arch }} devsecurely/cview-issuer:latest
+          docker pull --platform ${{ matrix.arch }} djkormo/adcs-issuer:latest
 
       - name: Tag locally to ensure we do not pull wrong architecture
         run: |
-          docker tag devsecurely/cview-issuer:latest local/cview-issuer:${{ matrix.local_tag }}
+          docker tag djkormo/adcs-issuer:latest local/adcs-issuer:${{ matrix.local_tag }}
 
       # Deliberately chosen master here to keep up-to-date.
       - name: Run Trivy vulnerability scanner for any major issues
         uses: aquasecurity/trivy-action@master
         with:
-            image-ref: local/cview-issuer:${{ matrix.local_tag }}
+            image-ref: local/adcs-issuer:${{ matrix.local_tag }}
             # Filter out any that have no current fix.
             ignore-unfixed: true
             # Only include major issues.
@@ -69,7 +69,7 @@ jobs:
       - name: Run Trivy vulnerability scanner for local output
         uses: aquasecurity/trivy-action@master
         with:
-            image-ref: local/cview-issuer:${{ matrix.local_tag }}
+            image-ref: local/adcs-issuer:${{ matrix.local_tag }}
             format: table
 
       #- name: Upload Trivy scan results to GitHub Security tab

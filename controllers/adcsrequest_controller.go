@@ -50,6 +50,16 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	log.Info("Running request", "request", req.Name)
 
+	// The certificate of a Ready request was written to the CertificateRequest
+	// on the reconcile that obtained it, before this AdcsRequest's status was
+	// saved (which is what re-enqueues it). Issue() returns no certificate for
+	// a Ready request, so processing it again would overwrite
+	// status.certificate with nil while keeping Ready=True/Issued.
+	if ar.Status.State == api.Ready {
+		log.V(3).Info("Request already Ready, nothing to do")
+		return ctrl.Result{}, nil
+	}
+
 	// Find the issuer
 	issuer, err := r.IssuerFactory.GetIssuer(ctx, ar.Spec.IssuerRef, ar.Namespace)
 	if err != nil {
@@ -90,6 +100,15 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.StatusCheckInterval}, nil
 	case api.Ready:
+
+		// ADCS can answer 200 application/pkix-cert with an empty body. Never
+		// mark the CertificateRequest Issued without a certificate (the CA chain
+		// alone would otherwise be written as the certificate). The AdcsRequest
+		// status is not saved either, so the request is retried.
+		if len(cert) == 0 {
+			log.Error(fmt.Errorf("empty certificate"), "ADCS returned Ready without a certificate, will be re-tried", "retry interval", issuer.RetryInterval)
+			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		}
 
 		// Combine the certificates, as we need the intermediate certs in with the CA.
 		combinedCert := cert

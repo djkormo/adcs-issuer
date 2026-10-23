@@ -23,45 +23,7 @@ rules:
   - adcs.certmanager.csf.nokia.com
   resources:
   - adcsissuers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - adcs.certmanager.csf.nokia.com
-  resources:
-  - adcsissuers/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - adcs.certmanager.csf.nokia.com
-  resources:
   - adcsrequests
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - adcs.certmanager.csf.nokia.com
-  resources:
-  - adcsrequests/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - adcs.certmanager.csf.nokia.com
-  resources:
   - clusteradcsissuers
   verbs:
   - create
@@ -74,6 +36,8 @@ rules:
 - apiGroups:
   - adcs.certmanager.csf.nokia.com
   resources:
+  - adcsissuers/status
+  - adcsrequests/status
   - clusteradcsissuers/status
   verbs:
   - get
