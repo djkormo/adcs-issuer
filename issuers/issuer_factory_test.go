@@ -2,11 +2,13 @@ package issuers
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -292,4 +294,176 @@ func TestGetIntervalUsesSpecValueWhenValid(t *testing.T) {
 func TestGetIntervalFallsBackToDefaultWhenInvalid(t *testing.T) {
 	result := getInterval("not-a-duration", "1h", logr.Discard())
 	assert.Equal(t, time.Hour, result)
+}
+
+func TestGetCaBundle(t *testing.T) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "trust", Namespace: "issuer-ns"},
+		Data: map[string][]byte{
+			"ca.crt":     []byte("default bundle"),
+			"bundle.pem": []byte("custom bundle"),
+			"empty":      {},
+		},
+	}
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "trust", Namespace: "issuer-ns"},
+		Data: map[string]string{
+			"ca.crt":     "configmap bundle",
+			"bundle.pem": "custom configmap bundle",
+		},
+		BinaryData: map[string][]byte{"binary.pem": []byte("binary bundle")},
+	}
+	tests := []struct {
+		name      string
+		ref       api.CABundleReference
+		namespace string
+		want      string
+		wantErr   string
+	}{
+		{name: "no reference", namespace: "issuer-ns"},
+		{name: "name only", ref: api.CABundleReference{Name: "trust"}, namespace: "issuer-ns", want: "default bundle"},
+		{name: "custom secret key", ref: api.CABundleReference{Name: "trust", Kind: "Secret", Key: "bundle.pem"}, namespace: "issuer-ns", want: "custom bundle"},
+		{name: "configmap default key", ref: api.CABundleReference{Name: "trust", Kind: "ConfigMap"}, namespace: "issuer-ns", want: "configmap bundle"},
+		{name: "custom configmap key", ref: api.CABundleReference{Name: "trust", Kind: "ConfigMap", Key: "bundle.pem"}, namespace: "issuer-ns", want: "custom configmap bundle"},
+		{name: "configmap binary data", ref: api.CABundleReference{Name: "trust", Kind: "ConfigMap", Key: "binary.pem"}, namespace: "issuer-ns", want: "binary bundle"},
+		{name: "missing secret key", ref: api.CABundleReference{Name: "trust", Key: "missing"}, namespace: "issuer-ns", wantErr: `key "missing" is missing or empty in Secret issuer-ns/trust`},
+		{name: "missing configmap key", ref: api.CABundleReference{Name: "trust", Kind: "ConfigMap", Key: "missing"}, namespace: "issuer-ns", wantErr: `key "missing" is missing or empty in ConfigMap issuer-ns/trust`},
+		{name: "empty key", ref: api.CABundleReference{Name: "trust", Key: "empty"}, namespace: "issuer-ns", wantErr: `key "empty" is missing or empty`},
+		{name: "namespace isolation", ref: api.CABundleReference{Name: "trust"}, namespace: "other-ns", wantErr: `Secret other-ns/trust`},
+		{name: "missing configmap", ref: api.CABundleReference{Name: "missing", Kind: "ConfigMap"}, namespace: "issuer-ns", wantErr: `ConfigMap issuer-ns/missing`},
+		{name: "missing name", ref: api.CABundleReference{Kind: "Secret"}, namespace: "issuer-ns", wantErr: "caBundleRef.name is required"},
+		{name: "unsupported kind", ref: api.CABundleReference{Name: "trust", Kind: "Pod"}, namespace: "issuer-ns", wantErr: `unsupported caBundleRef kind "Pod"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newTestFactory(t, secret, configMap)
+			bundle, err := f.getCaBundle(context.Background(), tt.ref, tt.namespace)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				assert.Empty(t, bundle)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, string(bundle))
+		})
+	}
+}
+
+func TestGetIssuerCABundleRef(t *testing.T) {
+	t.Setenv("ADCS_AUTH_MODE", "ntlm")
+	for _, issuerKind := range []string{"AdcsIssuer", "ClusterAdcsIssuer"} {
+		for _, sourceKind := range []string{"Secret", "ConfigMap"} {
+			namespaces := []string{""}
+			if issuerKind == "ClusterAdcsIssuer" {
+				namespaces = append(namespaces, "shared-trust")
+			}
+			for _, override := range namespaces {
+				t.Run(issuerKind+"/"+sourceKind+"/"+override, func(t *testing.T) {
+					namespace := "issuer-ns"
+					if issuerKind == "ClusterAdcsIssuer" {
+						namespace = "cluster-ns"
+					}
+					caNamespace := namespace
+					if override != "" {
+						caNamespace = override
+					}
+					ref := api.CABundleReference{Name: "trust", Kind: sourceKind, Key: "bundle.pem"}
+					var issuerObject client.Object
+					if issuerKind == "AdcsIssuer" {
+						issuerObject = &api.AdcsIssuer{
+							ObjectMeta: metav1.ObjectMeta{Name: "issuer", Namespace: namespace},
+							Spec: api.AdcsIssuerSpec{
+								URL:            "https://adcs.example.com",
+								CredentialsRef: api.LocalObjectReference{Name: "creds"},
+								CABundleRef:    ref,
+								CABundle:       []byte("invalid inline bundle must not be used"),
+							},
+						}
+					} else {
+						issuerObject = &api.ClusterAdcsIssuer{
+							ObjectMeta: metav1.ObjectMeta{Name: "issuer"},
+							Spec: api.ClusterAdcsIssuerSpec{
+								URL:            "https://adcs.example.com",
+								CredentialsRef: api.LocalObjectReference{Name: "creds"},
+								CABundleRef: api.NamespacedCABundleReference{
+									CABundleReference: ref,
+									Namespace:         override,
+								},
+								CABundle: []byte("invalid inline bundle must not be used"),
+							},
+						}
+					}
+					var source client.Object
+					if sourceKind == "Secret" {
+						source = &corev1.Secret{
+							ObjectMeta: metav1.ObjectMeta{Name: ref.Name, Namespace: caNamespace},
+							Data:       map[string][]byte{ref.Key: []byte(validCABundle)},
+						}
+					} else {
+						source = &corev1.ConfigMap{
+							ObjectMeta: metav1.ObjectMeta{Name: ref.Name, Namespace: caNamespace},
+							Data:       map[string]string{ref.Key: validCABundle},
+						}
+					}
+					f := newTestFactory(t, issuerObject, source, validSecret("creds", namespace))
+					issuer, err := f.GetIssuer(context.Background(), cmmeta.ObjectReference{Kind: issuerKind, Name: "issuer"}, "issuer-ns")
+					require.NoError(t, err)
+					assert.NotNil(t, issuer)
+
+					require.NoError(t, f.Delete(context.Background(), source))
+					issuer, err = f.GetIssuer(context.Background(), cmmeta.ObjectReference{Kind: issuerKind, Name: "issuer"}, "issuer-ns")
+					require.ErrorContains(t, err, "error loading ADCS CA bundle")
+					assert.Nil(t, issuer)
+				})
+			}
+		}
+	}
+}
+
+func TestGetIssuerCABundleRefLookupError(t *testing.T) {
+	t.Setenv("ADCS_AUTH_MODE", "ntlm")
+	for _, issuerKind := range []string{"AdcsIssuer", "ClusterAdcsIssuer"} {
+		for _, inline := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/inline=%t", issuerKind, inline), func(t *testing.T) {
+				var bundle []byte
+				if inline {
+					bundle = []byte(validCABundle)
+				}
+				ref := api.CABundleReference{Name: "missing"}
+				var issuerObject client.Object
+				namespace := "issuer-ns"
+				if issuerKind == "AdcsIssuer" {
+					issuerObject = &api.AdcsIssuer{
+						ObjectMeta: metav1.ObjectMeta{Name: "issuer", Namespace: namespace},
+						Spec: api.AdcsIssuerSpec{
+							URL:            "https://adcs.example.com",
+							CredentialsRef: api.LocalObjectReference{Name: "creds"},
+							CABundleRef:    ref,
+							CABundle:       bundle,
+						},
+					}
+				} else {
+					namespace = "cluster-ns"
+					issuerObject = &api.ClusterAdcsIssuer{
+						ObjectMeta: metav1.ObjectMeta{Name: "issuer"},
+						Spec: api.ClusterAdcsIssuerSpec{
+							URL:            "https://adcs.example.com",
+							CredentialsRef: api.LocalObjectReference{Name: "creds"},
+							CABundleRef:    api.NamespacedCABundleReference{CABundleReference: ref},
+							CABundle:       bundle,
+						},
+					}
+				}
+				f := newTestFactory(t, issuerObject, validSecret("creds", namespace))
+				issuer, err := f.GetIssuer(context.Background(), cmmeta.ObjectReference{Kind: issuerKind, Name: "issuer"}, "issuer-ns")
+				if inline {
+					require.NoError(t, err)
+					assert.NotNil(t, issuer)
+				} else {
+					require.ErrorContains(t, err, "loading caBundleRef Secret "+namespace+"/missing")
+					assert.Nil(t, issuer)
+				}
+			})
+		}
+	}
 }
