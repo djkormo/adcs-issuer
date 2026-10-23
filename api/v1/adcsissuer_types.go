@@ -25,10 +25,10 @@ type AdcsIssuerSpec struct {
 	// +optional
 	CABundle []byte `json:"caBundle,omitempty"`
 
-	// CABundleRef is a reference to a Secret containing the ca bundle of the
-	// ca for the ADCS server.
-	// The secret must contain 'ca.crt' key
-	CABundleRef LocalObjectReference `json:"caBundleRef,omitempty"`
+	// CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+	// Takes precedence over caBundle when the referenced bundle is available.
+	// +optional
+	CABundleRef CABundleReference `json:"caBundleRef,omitempty"`
 
 	// How often to check for request status in the server (in time.ParseDuration() format)
 	// Default 6 hours.

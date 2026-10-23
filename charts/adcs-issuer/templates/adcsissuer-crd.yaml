@@ -43,12 +43,23 @@ spec:
             description: AdcsIssuerSpec defines the desired state of AdcsIssuer
             properties:
               caBundleRef:
-                description: CABundleRef is a reference to a secret containing
-                  the ca bundle for the ADCS server. This secret must contain
-                  the 'ca.crt' key
+                description: |-
+                  CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+                  Takes precedence over caBundle when the referenced bundle is available.
                 properties:
+                  key:
+                    description: Key containing the PEM encoded CA bundle. Defaults
+                      to ca.crt.
+                    type: string
+                  kind:
+                    description: Kind of the referent. Defaults to Secret.
+                    enum:
+                    - Secret
+                    - ConfigMap
+                    type: string
                   name:
                     description: Name of the referent.
+                    minLength: 1
                     type: string
                 required:
                 - name

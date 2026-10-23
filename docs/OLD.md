@@ -70,7 +70,46 @@ spec:
 
 The `caBundle` parameter is BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
 
-The `caBundleRef.name` parameter is the name of the secret that stores the BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
+Alternatively, `caBundleRef` selects a PEM-encoded CA bundle from a Secret or ConfigMap. Only `name` is required when using `caBundleRef`.
+
+| Field | Default | Description |
+| --- | --- | --- |
+| `name` | Required | Name of the Secret or ConfigMap. |
+| `kind` | `Secret` | Either `Secret` or `ConfigMap`. |
+| `key` | `ca.crt` | Key containing the PEM-encoded CA bundle. |
+| `namespace` | Configured cluster resource namespace | **`ClusterAdcsIssuer` only.** Defaults to `--cluster-resource-namespace`: `kube-system` for the binary, or `adcs-issuer` with the default Helm values (`controllerManager.arguments.cluster-resource-namespace`). |
+
+For `AdcsIssuer`, the referenced resource must be in the same namespace as the `AdcsIssuer` resource; `caBundleRef.namespace` is not supported. This is not necessarily the namespace where the controller is deployed.
+
+A name-only reference continues to use a Secret's `ca.crt` key:
+
+```yaml
+spec:
+  caBundleRef:
+    name: adcs-ca
+```
+
+For a custom ConfigMap key, use `kind: ConfigMap` and `key: bundle.pem`. A `ClusterAdcsIssuer` can additionally select another namespace:
+
+```yaml
+apiVersion: adcs.certmanager.csf.nokia.com/v1
+kind: ClusterAdcsIssuer
+metadata:
+  name: test-adcs
+spec:
+  caBundleRef:
+    name: adcs-ca
+    kind: ConfigMap
+    key: bundle.pem
+    namespace: shared-trust
+  credentialsRef:
+    name: test-adcs-issuer-credentials
+  url: https://adcs.example.com
+```
+
+Secret `data` values are base64-encoded in YAML; Secret `stringData` and ConfigMap `data` values contain plain PEM text. ConfigMap `binaryData` is also supported. The controller must have read access to the referenced resource.
+
+The referenced bundle takes precedence over inline `caBundle`. If the resource or key cannot be loaded or is empty, the controller logs the error and uses inline `caBundle` when provided; otherwise, it returns the lookup error. If neither a reference nor an inline bundle is configured, issuer creation fails.
 
 The `statusCheckInterval` indicates how often the status of the request should be tested. Typically, it can take a few hours or even days before the certificate is issued.
 
@@ -107,7 +146,7 @@ spec:
   templateName: <adcs-template-name>
 ```
 
-The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), must be defined in the namespace where the controller's pod is running, or in the namespace specified by the flag  `-clusterResourceNamespace` (default: `kube-system`).
+The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`) must be defined in the namespace specified by `--cluster-resource-namespace` (default: `kube-system` for the binary; `adcs-issuer` with the default Helm values). This namespace is also the default for `caBundleRef.namespace`. An explicit `caBundleRef.namespace` changes only the CA bundle lookup, not the credentials lookup.
 
 ### Requesting certificates
 

@@ -58,9 +58,12 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 		return nil, pwError
 	}
 
-	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.Name, issuer.Namespace)
+	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef, issuer.Namespace)
 	if err != nil {
-		certs = []byte{}
+		if len(issuer.Spec.CABundle) == 0 {
+			return nil, err
+		}
+		log.Error(err, "Cannot load caBundleRef. Using inline caBundle.")
 	}
 	if len(certs) == 0 {
 		certs = issuer.Spec.CABundle
@@ -128,9 +131,16 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		return nil, pwError
 	}
 
-	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.Name, f.ClusterResourceNamespace)
+	caBundleNamespace := f.ClusterResourceNamespace
+	if issuer.Spec.CABundleRef.Namespace != "" {
+		caBundleNamespace = issuer.Spec.CABundleRef.Namespace
+	}
+	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.CABundleReference, caBundleNamespace)
 	if err != nil {
-		certs = []byte{}
+		if len(issuer.Spec.CABundle) == 0 {
+			return nil, err
+		}
+		log.Error(err, "Cannot load caBundleRef. Using inline caBundle.")
 	}
 	if len(certs) == 0 {
 		certs = issuer.Spec.CABundle
@@ -198,6 +208,7 @@ func getInterval(specValue string, def string, log logr.Logger) time.Duration {
 }
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, namespace string) (string, string, string, error) {
 	secret := new(corev1.Secret)
@@ -219,14 +230,46 @@ func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, 
 	return string(secret.Data["username"]), string(secret.Data["password"]), string(secret.Data["realm"]), nil
 }
 
-func (f *IssuerFactory) getCaBundle(ctx context.Context, secretName string, namespace string) ([]byte, error) {
-	secret := new(corev1.Secret)
-	if err := f.Client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
-		return []byte{}, err
+func (f *IssuerFactory) getCaBundle(ctx context.Context, ref api.CABundleReference, namespace string) ([]byte, error) {
+	if ref == (api.CABundleReference{}) {
+		return nil, nil
 	}
-	if _, ok := secret.Data["ca.crt"]; !ok {
-		return []byte{}, fmt.Errorf("ca.crt not set in secret")
+	if ref.Name == "" {
+		return nil, fmt.Errorf("caBundleRef.name is required")
 	}
+	key := ref.Key
+	if key == "" {
+		key = "ca.crt"
+	}
+	kind := ref.Kind
+	if kind == "" {
+		kind = "Secret"
+	}
+	objectKey := client.ObjectKey{Namespace: namespace, Name: ref.Name}
 
-	return secret.Data["ca.crt"], nil
+	var bundle []byte
+	switch kind {
+	case "Secret":
+		secret := new(corev1.Secret)
+		if err := f.Get(ctx, objectKey, secret); err != nil {
+			return nil, fmt.Errorf("loading caBundleRef Secret %s: %w", objectKey, err)
+		}
+		bundle = secret.Data[key]
+	case "ConfigMap":
+		configMap := new(corev1.ConfigMap)
+		if err := f.Get(ctx, objectKey, configMap); err != nil {
+			return nil, fmt.Errorf("loading caBundleRef ConfigMap %s: %w", objectKey, err)
+		}
+		if value, ok := configMap.Data[key]; ok {
+			bundle = []byte(value)
+		} else {
+			bundle = configMap.BinaryData[key]
+		}
+	default:
+		return nil, fmt.Errorf("unsupported caBundleRef kind %q: expected Secret or ConfigMap", kind)
+	}
+	if len(bundle) == 0 {
+		return nil, fmt.Errorf("caBundleRef key %q is missing or empty in %s %s", key, kind, objectKey)
+	}
+	return bundle, nil
 }
