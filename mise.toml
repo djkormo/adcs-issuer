@@ -1,0 +1,105 @@
+[settings]
+pin = true
+
+[tools]
+go = "1.27.3"
+helm = "3.21.2"
+"go:github.com/securego/gosec/v2/cmd/gosec" = "2.30.0"
+"go:github.com/sethvargo/ratchet" = "0.12.0"
+"go:golang.org/x/tools/cmd/deadcode" = "0.52.0"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.9.0"
+"go:honnef.co/go/tools/cmd/staticcheck" = "0.8.2"
+"go:mvdan.cc/gofumpt" = "0.12.0"
+"go:sigs.k8s.io/controller-runtime/tools/setup-envtest" = "0.25.2"
+"go:sigs.k8s.io/controller-tools/cmd/controller-gen" = "0.23.0"
+
+[tasks."build"]
+description = "Build the manager binary"
+run = "go build -o bin/manager main.go"
+depends = ['generate', 'fmt', 'check:vet']
+
+[tasks."run"]
+description = "Run the controller from your host"
+run = "go run ./main.go"
+depends = ['generate', 'fmt']
+
+[tasks."check"]
+description = "Run all static analysis tools"
+depends = [
+    'fmt',
+    'check:staticcheck',
+    'check:vulncheck',
+    'check:deadcode',
+    'check:vet',
+    'check:helm-lint'
+]
+
+[tasks."check:deadcode"]
+description = "Run deadcode"
+run = "deadcode -test ./..."
+
+[tasks."check:gosec"]
+description = "Run gosec"
+run = "gosec --exclude-generated -terse ./..."
+
+[tasks."check:staticcheck"]
+description = "Run staticcheck"
+run = "staticcheck ./..."
+
+[tasks."check:vulncheck"]
+description = "Run vulncheck"
+run = "govulncheck ./..."
+
+[tasks."check:vet"]
+description = "Run go vet"
+wait_for = ['fmt']
+run = "go vet ./..."
+
+[tasks."check:helm-lint"]
+description = "Lint helm chart"
+run = "helm lint --strict ./charts"
+
+[tasks."check:actions-lint"]
+description = "Check for unpinned actions"
+run = "ratchet lint .github/workflows/*.yaml"
+
+[tasks."fmt"]
+description = "Format all code"
+depends = ['fmt:go', 'fmt:gofix']
+
+[tasks."fmt:go"]
+description = "Format go code using gofumpt"
+run = "gofumpt -w ./"
+
+[tasks."fmt:gofix"]
+description = "Fix runs the Go fix tool (cmd/fix) on the named packages and applies suggested fixes."
+run = "go fix ./..."
+
+[tasks.generate]
+description = "Generate all"
+depends = ['generate:manifests', 'generate:deepcopy']
+
+[tasks."generate:manifests"]
+description = "Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects"
+run = 'controller-gen crd paths="./..." output:crd:artifacts:config=charts/crds'
+
+[tasks."generate:deepcopy"]
+description = "Generate DeepCopy, DeepCopyInto, and DeepCopyObject method implementations"
+run = 'controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."'
+
+[tasks."test"]
+description = "Run tests"
+env = { ENVTEST_K8S_VERSION = "1.33.0" } # see "envtest:versions" task for available versions
+run = 'KUBEBUILDER_ASSETS="$(pwd)/$(setup-envtest use $ENVTEST_K8S_VERSION --bin-dir bin -p path)" go test -race ./... -coverprofile cover.out'
+
+[tasks."envtest:versions"]
+description = "List available Kubernetes versions for envtest"
+run = "setup-envtest list"
+
+[tasks."actions:update"]
+description = "Upgrade all github actions to latest version satisfying their version tag"
+run = "ratchet update .github/workflows/*.yaml"
+
+[tasks."actions:upgrade"]
+description = "Upgrade all github actions to latest"
+run = "ratchet upgrade .github/workflows/*.yaml"
