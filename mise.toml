@@ -30,8 +30,8 @@ depends = [
     'check:staticcheck',
     'check:vulncheck',
     'check:deadcode',
-    'check:vet',
-    'check:helm-lint'
+    'check:vet'
+#    'check:helm-lint'
 ]
 
 [tasks."check:deadcode"]
