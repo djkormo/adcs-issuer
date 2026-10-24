@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
 
+
 permissions:
   contents: read
   # Optional: allow read access to pull request. Use with `only-new-issues` option.
@@ -13,22 +14,29 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.27'
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          args: --timeout=3m
-          version: v2.15.0
-          skip-cache: true
-          skip-save-cache: true
-          cache-invalidation-interval: 15
-      # TODO:
-      #  - codecov (ideally with PR comment)
-      #  - run `make test`
-      #  - `make generate` & make sure there is no diff
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.27'
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v8
+      with:
+        args: --timeout=3m
+        version: v2.15.0
+        skip-cache: true
+        skip-save-cache: true
+        cache-invalidation-interval: 15
 
-      #  - vulnerability scanner?
-
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # ratchet:actions/setup-go@v7
+      with:
+        go-version-file: 'go.mod'
+    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # ratchet:jdx/mise-action@v4
+    - run: mise run check
+    - name: Generate test certificates
+      run: bash scripts/generate-certs.sh
+    - run: mise run test

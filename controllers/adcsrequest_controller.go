@@ -8,9 +8,9 @@ import (
 	core "k8s.io/api/core/v1"
 	"k8s.io/klog"
 
-	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/recorder"
 
 	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
@@ -24,7 +24,7 @@ type AdcsRequestReconciler struct {
 	client.Client
 	Log                          logr.Logger
 	IssuerFactory                issuers.IssuerFactory
-	Recorder                     record.EventRecorder
+	Recorder                     recorder.EventRecorder
 	CertificateRequestController *CertificateRequestReconciler
 }
 
@@ -32,7 +32,7 @@ type AdcsRequestReconciler struct {
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests/status,verbs=get;update;patch
 
 func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := ctrl.LoggerFrom(ctx).WithValues("adcsrequest", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx).WithValues("AdcsRequest", req.NamespacedName)
 
 	// your logic here
 	log.Info("Processing request")
@@ -49,7 +49,6 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// The Manager will log other errors.
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-
 	}
 
 	log.V(3).Info("Running request", "Processing request", req.Name)
@@ -81,14 +80,14 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// We don't change the request status and just put it back on the queue
 		// to re-try later.
 		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 	}
 
 	// Get the original CertificateRequest to set result in
 	cr, err := r.CertificateRequestController.GetCertificateRequest(ctx, req.NamespacedName)
 	if err != nil {
 		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 	}
 
 	switch ar.Status.State {
@@ -98,9 +97,9 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		err = r.setStatus(ctx, ar)
 		if err != nil {
 			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+			return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 		}
-		return ctrl.Result{Requeue: true, RequeueAfter: issuer.StatusCheckInterval}, nil
+		return ctrl.Result{RequeueAfter: issuer.StatusCheckInterval}, nil
 	case api.Ready:
 
 		// ADCS can answer 200 application/pkix-cert with an empty body. Never
@@ -109,7 +108,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// status is not saved either, so the request is retried.
 		if len(cert) == 0 {
 			log.Error(fmt.Errorf("empty certificate"), "ADCS returned Ready without a certificate, will be re-tried", "retry interval", issuer.RetryInterval)
-			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+			return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 		}
 
 		// Combine the certificates, as we need the intermediate certs in with the CA.
@@ -117,6 +116,8 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		if caCert != nil {
 			combinedCert = append(cert, caCert...)
 		}
+
+		cr.Status.CA = caCert // TODO Maybe this should be injected on Certificate annotation
 		cr.Status.Certificate = combinedCert
 
 		if log.V(5).Enabled() {
@@ -129,7 +130,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
 		if err != nil {
 			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+			return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 		}
 
 	case api.Rejected:
@@ -140,34 +141,33 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "ADCS request rejected")
 		if err != nil {
 			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+			return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 		}
 
 	case api.Errored:
 		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonFailed, "ADCS request errored")
 		if err != nil {
 			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+			return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 		}
 	}
 
 	err = r.setStatus(ctx, ar)
 	if err != nil {
 		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
-		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
+		return ctrl.Result{RequeueAfter: issuer.RetryInterval}, nil
 	}
 
 	return ctrl.Result{}, nil
 }
 
 func (r *AdcsRequestReconciler) setStatus(ctx context.Context, ar *api.AdcsRequest) error {
-
 	// Fire an Event to additionally inform users of the change
 	eventType := core.EventTypeNormal
 	if ar.Status.State == api.Errored || ar.Status.State == api.Rejected {
 		eventType = core.EventTypeWarning
 	}
-	r.Recorder.Event(ar, eventType, string(ar.Status.State), ar.Status.Reason)
+	r.Recorder.Eventf(ar, nil, eventType, string(ar.Status.State), "Reconcile", ar.Status.Reason)
 
 	return r.Status().Update(ctx, ar)
 }

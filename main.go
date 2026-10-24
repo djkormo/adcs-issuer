@@ -73,7 +73,7 @@ func main() {
 
 	// Options for configuring logging
 	opts := zap.Options{
-		Development: false, //was true
+		Development: false, // was true
 	}
 	opts.BindFlags(flag.CommandLine)
 
@@ -98,11 +98,11 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
-		//MetricsBindAddress:     metricsAddr, //unknown field MetricsBindAddress in struct literal of type manager.Options
+		// MetricsBindAddress:     metricsAddr, //unknown field MetricsBindAddress in struct literal of type manager.Options
 		HealthProbeBindAddress: healthcheckAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "adcs-issuer-controller",
-		//Port:                   port, //unknown field Port in struct literal of type manager.Options
+		// Port:                   port, //unknown field Port in struct literal of type manager.Options
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -123,12 +123,12 @@ func main() {
 
 	certificateRequestReconciler := &controllers.CertificateRequestReconciler{
 		Client:   mgr.GetClient(),
-		Recorder: mgr.GetEventRecorderFor("adcs-certificaterequests-controller"),
+		Recorder: mgr.GetEventRecorder("adcs-certificaterequests-controller"),
 
 		Clock:                  clock.RealClock{},
 		CheckApprovedCondition: !disableApprovedCheck,
 	}
-	if err = (certificateRequestReconciler).SetupWithManager(mgr); err != nil {
+	if err = certificateRequestReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CertificateRequest")
 		os.Exit(1)
 	}
@@ -141,7 +141,7 @@ func main() {
 			ClusterResourceNamespace: clusterResourceNamespace,
 			AdcsTemplateName:         adcsTemplateName,
 		},
-		Recorder:                     mgr.GetEventRecorderFor("adcs-requests-controller"),
+		Recorder:                     mgr.GetEventRecorder("adcs-requests-controller"),
 		CertificateRequestController: certificateRequestReconciler,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AdcsRequest")
