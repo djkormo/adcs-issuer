@@ -25,10 +25,15 @@ jobs:
           skip-cache: true
           skip-save-cache: true
           cache-invalidation-interval: 15
-      # TODO:
-      #  - codecov (ideally with PR comment)
-      #  - run `make test`
-      #  - `make generate` & make sure there is no diff
 
-      #  - vulnerability scanner?
-
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # ratchet:actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # ratchet:jdx/mise-action@v4
+      - run: mise run check
+      - run: mise run test
