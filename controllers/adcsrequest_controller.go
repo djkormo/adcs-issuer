@@ -49,7 +49,6 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// The Manager will log other errors.
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-
 	}
 
 	log.V(3).Info("Running request", "Processing request", req.Name)
@@ -118,7 +117,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			combinedCert = append(cert, caCert...)
 		}
 
-		cr.Status.CA = caCert //TODO Maybe this should be injected on Certificate annotation
+		cr.Status.CA = caCert // TODO Maybe this should be injected on Certificate annotation
 		cr.Status.Certificate = combinedCert
 
 		if log.V(5).Enabled() {
@@ -163,7 +162,6 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 func (r *AdcsRequestReconciler) setStatus(ctx context.Context, ar *api.AdcsRequest) error {
-
 	// Fire an Event to additionally inform users of the change
 	eventType := core.EventTypeNormal
 	if ar.Status.State == api.Errored || ar.Status.State == api.Rejected {

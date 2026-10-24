@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/events"
@@ -89,7 +88,7 @@ func newAdcsRequestFixture(t *testing.T, server *httptest.Server, objs ...client
 	require.NoError(t, err)
 
 	issuerObj := &api.AdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-issuer", Namespace: "default"},
+		Name: "my-issuer", Namespace: "default",
 		Spec: api.AdcsIssuerSpec{
 			URL:                 server.URL,
 			CredentialsRef:      api.LocalObjectReference{Name: "my-secret"},
@@ -99,7 +98,7 @@ func newAdcsRequestFixture(t *testing.T, server *httptest.Server, objs ...client
 		},
 	}
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-secret", Namespace: "default"},
+		Name: "my-secret", Namespace: "default",
 		Data: map[string][]byte{
 			"username": []byte("user"),
 			"password": []byte("pass"),
@@ -152,7 +151,7 @@ func TestAdcsRequestReconcile_NotFound(t *testing.T) {
 	fixture := newAdcsRequestFixture(t, server)
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "missing"},
+		Namespace: "default", Name: "missing",
 	})
 
 	assert.NoError(t, err)
@@ -162,7 +161,7 @@ func TestAdcsRequestReconcile_NotFound(t *testing.T) {
 func TestAdcsRequestReconcile_GetIssuerError(t *testing.T) {
 	server := newAdcsBackend(t, adcsBackendConfig{})
 	ar := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: api.AdcsRequestSpec{
 			CSRPEM:    []byte("csr-bytes"),
 			IssuerRef: cmmeta.ObjectReference{Name: "my-issuer", Kind: "unsupported", Group: api.GroupVersion.Group},
@@ -171,7 +170,7 @@ func TestAdcsRequestReconcile_GetIssuerError(t *testing.T) {
 	fixture := newAdcsRequestFixture(t, server, ar)
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"},
+		Namespace: "default", Name: "req1",
 	})
 
 	assert.Error(t, err)
@@ -185,14 +184,14 @@ func TestAdcsRequestReconcile_UnknownToReady(t *testing.T) {
 	})
 
 	ar := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: api.AdcsRequestSpec{
 			CSRPEM:    []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
 		},
 	}
 	cr := &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: cmapi.CertificateRequestSpec{
 			Request:   []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
@@ -201,7 +200,7 @@ func TestAdcsRequestReconcile_UnknownToReady(t *testing.T) {
 	fixture := newAdcsRequestFixture(t, server, ar, cr)
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"},
+		Namespace: "default", Name: "req1",
 	})
 
 	assert.NoError(t, err)
@@ -224,7 +223,7 @@ func TestAdcsRequestReconcile_Pending(t *testing.T) {
 	})
 
 	ar := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: api.AdcsRequestSpec{
 			CSRPEM:    []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
@@ -235,7 +234,7 @@ func TestAdcsRequestReconcile_Pending(t *testing.T) {
 		},
 	}
 	cr := &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: cmapi.CertificateRequestSpec{
 			Request:   []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
@@ -244,7 +243,7 @@ func TestAdcsRequestReconcile_Pending(t *testing.T) {
 	fixture := newAdcsRequestFixture(t, server, ar, cr)
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"},
+		Namespace: "default", Name: "req1",
 	})
 
 	assert.NoError(t, err)
@@ -259,7 +258,7 @@ func testTerminalState(t *testing.T, state api.State, expectedReason string, exp
 	server := newAdcsBackend(t, adcsBackendConfig{})
 
 	ar := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: api.AdcsRequestSpec{
 			CSRPEM:    []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
@@ -269,7 +268,7 @@ func testTerminalState(t *testing.T, state api.State, expectedReason string, exp
 		},
 	}
 	cr := &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: cmapi.CertificateRequestSpec{
 			Request:   []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
@@ -278,7 +277,7 @@ func testTerminalState(t *testing.T, state api.State, expectedReason string, exp
 	fixture := newAdcsRequestFixture(t, server, ar, cr)
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"},
+		Namespace: "default", Name: "req1",
 	})
 
 	assert.NoError(t, err)
@@ -317,21 +316,21 @@ func TestAdcsRequestReconcile_ReadyIsNotReprocessed(t *testing.T) {
 	})
 
 	ar := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: api.AdcsRequestSpec{
 			CSRPEM:    []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
 		},
 	}
 	cr := &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: cmapi.CertificateRequestSpec{
 			Request:   []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
 		},
 	}
 	fixture := newAdcsRequestFixture(t, server, ar, cr)
-	req := ctrl.Request{NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"}}
+	req := ctrl.Request{Namespace: "default", Name: "req1"}
 
 	_, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), req)
 	require.NoError(t, err)
@@ -360,21 +359,21 @@ func TestAdcsRequestReconcile_EmptyCertificateIsNotIssued(t *testing.T) {
 	})
 
 	ar := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: api.AdcsRequestSpec{
 			CSRPEM:    []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
 		},
 	}
 	cr := &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "req1", Namespace: "default"},
+		Name: "req1", Namespace: "default",
 		Spec: cmapi.CertificateRequestSpec{
 			Request:   []byte("csr-bytes"),
 			IssuerRef: issuerRefFor("my-issuer"),
 		},
 	}
 	fixture := newAdcsRequestFixture(t, server, ar, cr)
-	req := ctrl.Request{NamespacedName: types.NamespacedName{Namespace: "default", Name: "req1"}}
+	req := ctrl.Request{Namespace: "default", Name: "req1"}
 
 	res, err := fixture.adcsRequestReconciler.Reconcile(context.Background(), req)
 	assert.NoError(t, err)

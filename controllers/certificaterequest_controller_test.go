@@ -10,7 +10,6 @@ import (
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/events"
@@ -54,7 +53,7 @@ func newCertificateRequestReconciler(objs ...client.Object) (*CertificateRequest
 
 func baseCertificateRequest(name, namespace string) *cmapi.CertificateRequest {
 	return &cmapi.CertificateRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+		Name: name, Namespace: namespace,
 		Spec: cmapi.CertificateRequestSpec{
 			Request: []byte("test-csr"),
 			IssuerRef: cmmeta.ObjectReference{
@@ -70,7 +69,7 @@ func TestCertificateRequestReconcile_NotFound(t *testing.T) {
 	r, _ := newCertificateRequestReconciler()
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "missing"},
+		Namespace: "default", Name: "missing",
 	})
 
 	assert.NoError(t, err)
@@ -83,7 +82,7 @@ func TestCertificateRequestReconcile_IssuerGroupMismatch(t *testing.T) {
 	r, _ := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -98,7 +97,7 @@ func TestCertificateRequestReconcile_AlreadyReady(t *testing.T) {
 	r, _ := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -113,7 +112,7 @@ func TestCertificateRequestReconcile_AlreadyFailed(t *testing.T) {
 	r, _ := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -128,7 +127,7 @@ func TestCertificateRequestReconcile_AlreadyDenied(t *testing.T) {
 	r, _ := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -143,7 +142,7 @@ func TestCertificateRequestReconcile_Denied(t *testing.T) {
 	r, fakeClient := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -165,7 +164,7 @@ func TestCertificateRequestReconcile_NotApproved(t *testing.T) {
 	r.CheckApprovedCondition = true
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -178,7 +177,7 @@ func TestCertificateRequestReconcile_AlreadyHasCertificate(t *testing.T) {
 	r, _ := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -190,7 +189,7 @@ func TestCertificateRequestReconcile_CreatesNewAdcsRequest(t *testing.T) {
 	r, fakeClient := newCertificateRequestReconciler(cr)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -215,13 +214,13 @@ func TestCertificateRequestReconcile_CreatesNewAdcsRequest(t *testing.T) {
 func TestCertificateRequestReconcile_ExistingAdcsRequestSameCSR(t *testing.T) {
 	cr := baseCertificateRequest("cr1", "default")
 	adcsReq := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "cr1", Namespace: "default"},
-		Spec:       api.AdcsRequestSpec{CSRPEM: cr.Spec.Request, IssuerRef: cr.Spec.IssuerRef},
+		Name: "cr1", Namespace: "default",
+		Spec: api.AdcsRequestSpec{CSRPEM: cr.Spec.Request, IssuerRef: cr.Spec.IssuerRef},
 	}
 	r, fakeClient := newCertificateRequestReconciler(cr, adcsReq)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
@@ -235,13 +234,13 @@ func TestCertificateRequestReconcile_ExistingAdcsRequestSameCSR(t *testing.T) {
 func TestCertificateRequestReconcile_ExistingAdcsRequestDifferentCSR(t *testing.T) {
 	cr := baseCertificateRequest("cr1", "default")
 	adcsReq := &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "cr1", Namespace: "default"},
-		Spec:       api.AdcsRequestSpec{CSRPEM: []byte("different-csr"), IssuerRef: cr.Spec.IssuerRef},
+		Name: "cr1", Namespace: "default",
+		Spec: api.AdcsRequestSpec{CSRPEM: []byte("different-csr"), IssuerRef: cr.Spec.IssuerRef},
 	}
 	r, fakeClient := newCertificateRequestReconciler(cr, adcsReq)
 
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "cr1"},
+		Namespace: "default", Name: "cr1",
 	})
 
 	assert.NoError(t, err)
