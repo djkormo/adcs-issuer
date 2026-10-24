@@ -23,16 +23,16 @@ type NtlmCertsrv struct {
 	url      string
 	username string
 	password string
-	//ca         string
+	// ca         string
 	httpClient *http.Client
 }
 
-func NewNtlmCertsrv(url string, username string, password string, caCertPool *x509.CertPool, verify bool) (AdcsCertsrv, error) {
+func NewNtlmCertsrv(url string, username string, password string, caCertPool *x509.CertPool, verify bool, insecureSkipVerify bool) (AdcsCertsrv, error) {
 	log := log.Log.WithName("newNtlm")
 	var client *http.Client
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: false,
+			InsecureSkipVerify: insecureSkipVerify,
 			RootCAs:            caCertPool,
 		},
 	}
@@ -109,7 +109,7 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
  */
 func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("GetExistingCertificate")
-	var certStatus = Unknown
+	certStatus := Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
 	if os.Getenv("ENABLE_DEBUG") == "true" {
@@ -194,7 +194,6 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 		}
 	}
 	return certStatus, "", id, fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res.Status, err.Error())
-
 }
 
 /*
@@ -206,7 +205,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
  */
 func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
 	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
-	var certStatus = Unknown
+	certStatus := Unknown
 
 	log.V(1).Info("Starting certificate request")
 
@@ -223,7 +222,6 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
-
 	if err != nil {
 		log.Error(err, "Cannot create request")
 		return certStatus, "", "", err
@@ -287,12 +285,12 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 			errorString := ""
 			exp = regexp.MustCompile(`The disposition message is "([^"]+)`)
 			found = exp.FindStringSubmatch(bodyString)
-			var errorContext []interface{}
+			var errorContext []any
 			if len(found) > 1 {
 				errorString = found[1]
 			} else {
 				errorString = "Unknown error occurred"
-				errorContext = []interface{}{"body", bodyString}
+				errorContext = []any{"body", bodyString}
 			}
 			err := errors.New(errorString)
 			// TODO
@@ -385,10 +383,12 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	}
 	return "", fmt.Errorf("ADCS Certsrv response status %s", res2.Status)
 }
+
 func (s *NtlmCertsrv) GetCaCertificate() (string, error) {
 	log.Log.WithName("GetCaCertificate").Info("Getting CA from ADCS Certsrv", "url", s.url)
 	return s.obtainCaCertificate(certnew_cer, ct_pkix)
 }
+
 func (s *NtlmCertsrv) GetCaCertificateChain() (string, error) {
 	log.Log.WithName("GetCaCertificateChain").Info("Getting CA Chain from ADCS Certsrv", "url", s.url)
 	return s.obtainCaCertificate(certnew_p7b, ct_pkcs7)

@@ -365,13 +365,13 @@ func TestNtlmVerifyNtlm(t *testing.T) {
 
 func TestNewNtlmCertsrv(t *testing.T) {
 	t.Run("verify false with credentials set", func(t *testing.T) {
-		c, err := NewNtlmCertsrv("http://example.invalid", "user", "pass", nil, false)
+		c, err := NewNtlmCertsrv("http://example.invalid", "user", "pass", nil, false, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 	})
 
 	t.Run("verify false with credentials empty", func(t *testing.T) {
-		c, err := NewNtlmCertsrv("http://example.invalid", "", "", nil, false)
+		c, err := NewNtlmCertsrv("http://example.invalid", "", "", nil, false, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 	})
@@ -382,7 +382,7 @@ func TestNewNtlmCertsrv(t *testing.T) {
 		}))
 		defer server.Close()
 
-		c, err := NewNtlmCertsrv(server.URL, "", "", nil, true)
+		c, err := NewNtlmCertsrv(server.URL, "", "", nil, true, true)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 	})
