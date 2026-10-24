@@ -57,7 +57,7 @@ run = "go vet ./..."
 
 [tasks."check:helm-lint"]
 description = "Lint helm chart"
-run = "helm lint --strict ./charts"
+run = "helm lint --strict ./charts/adcs-issuer"
 
 [tasks."check:actions-lint"]
 description = "Check for unpinned actions"
