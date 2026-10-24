@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	//cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	//cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	// cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
+	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -58,7 +58,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 
 		if log.V(5).Enabled() {
 			log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id)
-
 		}
 	}
 	if err != nil {
@@ -93,7 +92,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 
 	// Get a certificateChain from the server.
 	certChain, err := i.certServ.GetCaCertificateChain()
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,7 +102,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 
 	// Parse and encode the certificateChain to a valid x509 certificate.
 	ca, err := parseCaCert([]byte(certChain), log)
-
 	if err != nil {
 		log.Error(err, "something went wrong parsing to x509")
 		return nil, nil, err
@@ -119,7 +116,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 	log.Info("will return cert", "cert", cert)
 
 	return cert, ca, nil
-
 }
 
 // x509Bytes is a slice of bytes
@@ -128,7 +124,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 // ParseCaCert accepts bytes representing a certificate and returns x509 certificate encoded pem
 
 func parseCaCert(cc []byte, log logr.Logger) ([]byte, error) {
-
 	// decode Pem from certificate into block
 	block, rest := pem.Decode([]byte(cc))
 	if block == nil {
@@ -165,7 +160,6 @@ func tryParseX509(block *pem.Block) ([]byte, error) {
 	}
 
 	b, err := pkcs7.Parse(block.Bytes)
-
 	if err != nil {
 		err = fmt.Errorf("parsing PKCS7: %w", err)
 		return nil, err
