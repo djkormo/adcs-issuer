@@ -8,7 +8,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,7 +63,7 @@ func newTestFactory(t *testing.T, objs ...client.Object) *IssuerFactory {
 
 func validSecret(name, namespace string) *corev1.Secret {
 	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+		Name: name, Namespace: namespace,
 		Data: map[string][]byte{
 			"username": []byte("user"),
 			"password": []byte("pass"),
@@ -83,7 +82,7 @@ func TestGetIssuerUnsupportedKind(t *testing.T) {
 
 func TestGetIssuerRoutesToAdcsIssuer(t *testing.T) {
 	adcsIssuer := &api.AdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-issuer", Namespace: "default"},
+		Name: "my-issuer", Namespace: "default",
 		Spec: api.AdcsIssuerSpec{
 			URL:            "https://adcs.example.com",
 			CredentialsRef: api.LocalObjectReference{Name: "creds"},
@@ -104,7 +103,7 @@ func TestGetIssuerRoutesToAdcsIssuer(t *testing.T) {
 
 func TestGetIssuerRoutesToClusterAdcsIssuer(t *testing.T) {
 	clusterIssuer := &api.ClusterAdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-cluster-issuer"},
+		Name: "my-cluster-issuer",
 		Spec: api.ClusterAdcsIssuerSpec{
 			URL:            "https://adcs.example.com",
 			CredentialsRef: api.LocalObjectReference{Name: "creds"},
@@ -134,7 +133,7 @@ func TestGetAdcsIssuerNotFound(t *testing.T) {
 
 func TestGetAdcsIssuerEmptyCABundle(t *testing.T) {
 	adcsIssuer := &api.AdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-issuer", Namespace: "default"},
+		Name: "my-issuer", Namespace: "default",
 		Spec: api.AdcsIssuerSpec{
 			URL:            "https://adcs.example.com",
 			CredentialsRef: api.LocalObjectReference{Name: "creds"},
@@ -151,7 +150,7 @@ func TestGetAdcsIssuerEmptyCABundle(t *testing.T) {
 
 func TestGetAdcsIssuerInvalidCABundle(t *testing.T) {
 	adcsIssuer := &api.AdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-issuer", Namespace: "default"},
+		Name: "my-issuer", Namespace: "default",
 		Spec: api.AdcsIssuerSpec{
 			URL:            "https://adcs.example.com",
 			CredentialsRef: api.LocalObjectReference{Name: "creds"},
@@ -178,7 +177,7 @@ func TestGetClusterAdcsIssuerNotFound(t *testing.T) {
 
 func TestGetClusterAdcsIssuerEmptyCABundle(t *testing.T) {
 	clusterIssuer := &api.ClusterAdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-cluster-issuer"},
+		Name: "my-cluster-issuer",
 		Spec: api.ClusterAdcsIssuerSpec{
 			URL:            "https://adcs.example.com",
 			CredentialsRef: api.LocalObjectReference{Name: "creds"},
@@ -195,7 +194,7 @@ func TestGetClusterAdcsIssuerEmptyCABundle(t *testing.T) {
 
 func TestGetClusterAdcsIssuerInvalidCABundle(t *testing.T) {
 	clusterIssuer := &api.ClusterAdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-cluster-issuer"},
+		Name: "my-cluster-issuer",
 		Spec: api.ClusterAdcsIssuerSpec{
 			URL:            "https://adcs.example.com",
 			CredentialsRef: api.LocalObjectReference{Name: "creds"},
@@ -224,7 +223,7 @@ func TestGetUserPasswordSecretNotFound(t *testing.T) {
 
 func TestGetUserPasswordMissingUsername(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: "default"},
+		Name: "creds", Namespace: "default",
 		Data: map[string][]byte{
 			"password": []byte("pass"),
 		},
@@ -238,7 +237,7 @@ func TestGetUserPasswordMissingUsername(t *testing.T) {
 
 func TestGetUserPasswordMissingPassword(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: "default"},
+		Name: "creds", Namespace: "default",
 		Data: map[string][]byte{
 			"username": []byte("user"),
 		},
@@ -262,7 +261,7 @@ func TestGetUserPasswordMissingRealmWhenKerberos(t *testing.T) {
 
 func TestGetUserPasswordSuccess(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: "default"},
+		Name: "creds", Namespace: "default",
 		Data: map[string][]byte{
 			"username": []byte("user"),
 			"password": []byte("pass"),
