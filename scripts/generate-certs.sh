@@ -6,11 +6,6 @@ set -o pipefail
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 OUTPUT_DIR="${SCRIPT_DIR}/../issuers/testdata"
 
-if [ -f "${OUTPUT_DIR}/pkcs7.pem" ] && [ -f "${OUTPUT_DIR}/x509.pem" ]; then
-    printf 'Certificates already exist, skipping generation...\n'
-    exit 0
-fi
-
 set -x
 
 mkdir -pv "${OUTPUT_DIR}/ca"
@@ -51,8 +46,9 @@ openssl req -x509 -new -nodes \
     -out "${OUTPUT_DIR}/ca/ca.pem" \
     -config "${OUTPUT_DIR}/ca/ca.cnf"
 
-# This is probably wrong, but it seems the test
-# just compares equality of the parsed pkcs7.pem to the raw x509.pem...
-# TODO: review
-cp -v "${OUTPUT_DIR}/ca/ca.pem" "${OUTPUT_DIR}/pkcs7.pem"
+# Create a PEM-encoded PKCS#7 bundle containing the CA certificate.
+openssl crl2pkcs7 -nocrl \
+    -certfile "${OUTPUT_DIR}/ca/ca.pem" \
+    -outform PEM \
+    -out "${OUTPUT_DIR}/pkcs7.pem"
 cp -v "${OUTPUT_DIR}/ca/ca.pem" "${OUTPUT_DIR}/x509.pem"

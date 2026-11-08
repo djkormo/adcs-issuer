@@ -2,16 +2,15 @@ package issuers
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-var (
-	log = ctrl.Log.WithName("issuer_test")
-)
+var log = ctrl.Log.WithName("issuer_test")
 
 // TODO: provide proper PKCS7 certificates for testing.
 // TODO: create makefile to populate testdata (openssl)
@@ -35,7 +34,7 @@ func TestParsingCaCertShouldReturnX509(t *testing.T) {
 }
 
 func TestIncorrectFormatPkcs(t *testing.T) {
-	//arrange
+	// arrange
 	incorrectPKCS7Cert, err := os.ReadFile("testdata/incorrectPKCS7Cert.pem")
 	assert.NoError(t, err)
 
@@ -96,7 +95,6 @@ func TestCorrectX509Cert(t *testing.T) {
 	// arrange
 	// raw format pkcs7.p7b from cfss testdata (https://github.com/cloudflare/cfssl/tree/master/helpers/testdata)
 	x509, err := os.ReadFile("testdata/x509.pem")
-
 	if err != nil {
 		fmt.Println("TestCorrectX509Cert")
 	}

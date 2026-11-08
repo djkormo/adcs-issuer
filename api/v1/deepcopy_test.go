@@ -5,20 +5,15 @@ import (
 
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func newFullAdcsIssuer() *AdcsIssuer {
 	return &AdcsIssuer{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "AdcsIssuer",
-			APIVersion: "adcs.certmanager.csf.nokia.com/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-issuer",
-			Namespace: "default",
-			Labels:    map[string]string{"foo": "bar"},
-		},
+		Kind:       "AdcsIssuer",
+		APIVersion: "adcs.certmanager.csf.nokia.com/v1",
+		Name:       "test-issuer",
+		Namespace:  "default",
+		Labels:     map[string]string{"foo": "bar"},
 		Spec: AdcsIssuerSpec{
 			URL:                 "https://adcs.example.com",
 			CredentialsRef:      LocalObjectReference{Name: "creds"},
@@ -33,14 +28,10 @@ func newFullAdcsIssuer() *AdcsIssuer {
 
 func newFullClusterAdcsIssuer() *ClusterAdcsIssuer {
 	return &ClusterAdcsIssuer{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterAdcsIssuer",
-			APIVersion: "adcs.certmanager.csf.nokia.com/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "test-cluster-issuer",
-			Labels: map[string]string{"foo": "bar"},
-		},
+		Kind:       "ClusterAdcsIssuer",
+		APIVersion: "adcs.certmanager.csf.nokia.com/v1",
+		Name:       "test-cluster-issuer",
+		Labels:     map[string]string{"foo": "bar"},
 		Spec: ClusterAdcsIssuerSpec{
 			URL:                 "https://adcs.example.com",
 			CredentialsRef:      LocalObjectReference{Name: "creds"},
@@ -55,15 +46,11 @@ func newFullClusterAdcsIssuer() *ClusterAdcsIssuer {
 
 func newFullAdcsRequest() *AdcsRequest {
 	return &AdcsRequest{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "AdcsRequest",
-			APIVersion: "adcs.certmanager.csf.nokia.com/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-request",
-			Namespace: "default",
-			Labels:    map[string]string{"foo": "bar"},
-		},
+		Kind:       "AdcsRequest",
+		APIVersion: "adcs.certmanager.csf.nokia.com/v1",
+		Name:       "test-request",
+		Namespace:  "default",
+		Labels:     map[string]string{"foo": "bar"},
 		Spec: AdcsRequestSpec{
 			CSRPEM: []byte("csr-bytes"),
 			IssuerRef: cmmeta.ObjectReference{
@@ -152,9 +139,9 @@ func TestAdcsIssuerDeepCopy(t *testing.T) {
 
 func TestAdcsIssuerListDeepCopy(t *testing.T) {
 	in := &AdcsIssuerList{
-		TypeMeta: metav1.TypeMeta{Kind: "AdcsIssuerList"},
-		ListMeta: metav1.ListMeta{ResourceVersion: "1"},
-		Items:    []AdcsIssuer{*newFullAdcsIssuer(), *newFullAdcsIssuer()},
+		Kind:            "AdcsIssuerList",
+		ResourceVersion: "1",
+		Items:           []AdcsIssuer{*newFullAdcsIssuer(), *newFullAdcsIssuer()},
 	}
 
 	out := in.DeepCopy()
@@ -232,9 +219,9 @@ func TestClusterAdcsIssuerDeepCopy(t *testing.T) {
 
 func TestClusterAdcsIssuerListDeepCopy(t *testing.T) {
 	in := &ClusterAdcsIssuerList{
-		TypeMeta: metav1.TypeMeta{Kind: "ClusterAdcsIssuerList"},
-		ListMeta: metav1.ListMeta{ResourceVersion: "1"},
-		Items:    []ClusterAdcsIssuer{*newFullClusterAdcsIssuer(), *newFullClusterAdcsIssuer()},
+		Kind:            "ClusterAdcsIssuerList",
+		ResourceVersion: "1",
+		Items:           []ClusterAdcsIssuer{*newFullClusterAdcsIssuer(), *newFullClusterAdcsIssuer()},
 	}
 
 	out := in.DeepCopy()
@@ -313,9 +300,9 @@ func TestAdcsRequestDeepCopy(t *testing.T) {
 
 func TestAdcsRequestListDeepCopy(t *testing.T) {
 	in := &AdcsRequestList{
-		TypeMeta: metav1.TypeMeta{Kind: "AdcsRequestList"},
-		ListMeta: metav1.ListMeta{ResourceVersion: "1"},
-		Items:    []AdcsRequest{*newFullAdcsRequest(), *newFullAdcsRequest()},
+		Kind:            "AdcsRequestList",
+		ResourceVersion: "1",
+		Items:           []AdcsRequest{*newFullAdcsRequest(), *newFullAdcsRequest()},
 	}
 
 	out := in.DeepCopy()

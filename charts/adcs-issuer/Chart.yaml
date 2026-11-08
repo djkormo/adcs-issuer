@@ -35,3 +35,53 @@ dependencies:
     version: ~v1.18.6
     repository: https://charts.jetstack.io
     condition: cert-manager-1-18.enabled
+
+
+annotations:
+  helm.sh/images: |
+    - name: manager
+      image: djkormo/adcs-issuer:2.2.4
+  artifacthub.io/category: security
+  artifacthub.io/images: |
+    - name: manager
+      image: djkormo/adcs-issuer:2.2.4
+      platforms:
+        - linux/amd64
+    
+  artifacthub.io/crds: |
+    - kind: AdcsIssuer
+      version: v1
+      name: adcsissuer
+      displayName: ADCS Issuer  
+  artifacthub.io/crdsExamples: |
+    - apiVersion: adcs.certmanager.csf.nokia.com/v1
+      kind: AdcsIssuer
+      metadata:
+        name: adcs-issuer
+        namespace: adcs-issuer
+      spec:
+        caBundle: REDACTED
+        credentialsRef:
+          name: adcs-issuer-credentials
+        retryInterval: 5m
+        statusCheckInterval: 5m
+        templateName: SslWebServer1month
+        url: http://adcs-local/certsrv
+        
+
+  artifacthub.io/license: Apache-2.0
+  
+  artifacthub.io/maintainers: |
+    - name: djkormo
+      email: djkormo@gmail.com
+  artifacthub.io/operator: "true"
+  artifacthub.io/prerelease: "false"
+  
+#  artifacthub.io/screenshots: |
+#    - title: Sample screenshot 1
+#      url: https://example.com/screenshot1.jpg
+#    - title: Sample screenshot 2
+#      url: https://example.com/screenshot2.jpg    
+#  artifacthub.io/signKey: |
+#    fingerprint: C874011F0AB405110D02105534365D9472D7468F
+#    url: https://keybase.io/hashicorp/pgp_keys.asc        

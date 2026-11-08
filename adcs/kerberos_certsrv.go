@@ -26,7 +26,7 @@ type KerberosCertsrv struct {
 	httpClient *spnego.Client
 }
 
-func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.CertPool, verify bool) (*KerberosCertsrv, error) {
+func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.CertPool, verify bool, insecureSkipVerify bool) (*KerberosCertsrv, error) {
 	logger := log.Log.WithName("NewKerberosCertsrv")
 	// Path to your krb5.conf
 	krb5ConfPath := "/etc/krb5.conf"
@@ -60,7 +60,8 @@ func NewKerberosCertsrv(url, username, realm, password string, caCertPool *x509.
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			RootCAs: caPool,
+			InsecureSkipVerify: insecureSkipVerify,
+			RootCAs:            caPool,
 		},
 	}
 
@@ -203,7 +204,6 @@ func (s *KerberosCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus,
 		}
 	}
 	return certStatus, "", id, fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res.Status, err.Error())
-
 }
 
 /*
@@ -232,7 +232,6 @@ func (s *KerberosCertsrv) RequestCertificate(csr string, template string) (AdcsR
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
-
 	if err != nil {
 		log.Error(err, "Cannot create request")
 		return certStatus, "", "", err
@@ -301,12 +300,12 @@ func (s *KerberosCertsrv) RequestCertificate(csr string, template string) (AdcsR
 			errorString := ""
 			exp = regexp.MustCompile(`The disposition message is "([^"]+)`)
 			found = exp.FindStringSubmatch(bodyString)
-			var errorContext []interface{}
+			var errorContext []any
 			if len(found) > 1 {
 				errorString = found[1]
 			} else {
 				errorString = "Unknown error occured"
-				errorContext = []interface{}{"body", bodyString}
+				errorContext = []any{"body", bodyString}
 			}
 			err := errors.New(errorString)
 			// TODO
@@ -365,9 +364,7 @@ func (s *KerberosCertsrv) obtainCaCertificate(certPage string, expectedContentTy
 	req.Header.Set("User-agent", "Mozilla")
 
 	res2, err := s.httpClient.Do(req)
-
 	// klog.V(4).Infof("Response Getting CAcert obtainingCaCertificate: %v ", res2)
-
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return "", err
@@ -395,10 +392,12 @@ func (s *KerberosCertsrv) obtainCaCertificate(certPage string, expectedContentTy
 	}
 	return "", fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res2.Status, err.Error())
 }
+
 func (s *KerberosCertsrv) GetCaCertificate() (string, error) {
 	log.Log.WithName("GetCaCertificate").Info("Getting CA from ADCS Certsrv", "url", s.url)
 	return s.obtainCaCertificate(certnew_cer, ct_pkix)
 }
+
 func (s *KerberosCertsrv) GetCaCertificateChain() (string, error) {
 	log.Log.WithName("GetCaCertificateChain").Info("Getting CA Chain from ADCS Certsrv", "url", s.url)
 	return s.obtainCaCertificate(certnew_p7b, ct_pkcs7)
