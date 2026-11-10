@@ -149,6 +149,7 @@ controllerManager:
   enabledWebHooks: false                      # Enable or disable webhooks.
   enabledCaCerts: false                       # Enable or disable mounting CA certificates.
   caCertsSecretName: ca-certificates          # Name of the secret containing CA certificates.
+  caCertsSecretKey: ca-certificates.crt       # Key of the secret containing CA certificates.
 
 # @section Metrics Service
 # Service configuration for exposing metrics.
