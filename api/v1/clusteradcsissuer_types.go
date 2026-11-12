@@ -20,10 +20,15 @@ type ClusterAdcsIssuerSpec struct {
 	// The secret must contain two keys, 'username' and 'password'.
 	CredentialsRef LocalObjectReference `json:"credentialsRef"`
 
-	// CABundle is a PEM encoded TLS certifiate to use to verify connections to
+	// CABundle is a PEM encoded TLS certificate to use to verify connections to
 	// the ADCS server.
 	// +optional
 	CABundle []byte `json:"caBundle,omitempty"`
+
+	// CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+	// Takes precedence over caBundle when the referenced bundle is available.
+	// +optional
+	CABundleRef NamespacedCABundleReference `json:"caBundleRef,omitempty"`
 
 	// How often to check for request status in the server (in time.ParseDuration() format)
 	// Default 6 hours.
