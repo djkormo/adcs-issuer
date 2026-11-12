@@ -45,6 +45,7 @@ Kubernetes: `>=1.27.0-0`
 | controllerManager.arguments.disable-approved-check | string | `"false"` |  |
 | controllerManager.arguments.enable-leader-election | string | `"true"` |  |
 | controllerManager.arguments.zap-log-level | int | `5` |  |
+| controllerManager.caCertsSecretKey | string | `"ca-certificates.crt"` |  |
 | controllerManager.caCertsSecretName | string | `"ca-certificates"` |  |
 | controllerManager.enabledCaCerts | bool | `false` |  |
 | controllerManager.enabledWebHooks | bool | `false` |  |
