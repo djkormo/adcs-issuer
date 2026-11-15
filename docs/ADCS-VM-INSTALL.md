@@ -203,3 +203,121 @@ If the test was successful, you now have a useless test certificate sitting in t
 ```powershell
 Get-ChildItem -Path "Cert:\CurrentUser\My" | Where-Object Subject -match "CN=TestPermission" | Remove-Item
 ```
+
+
+
+
+How to add SSL to ADCS Web
+
+
+
+### How to make static IP
+
+TODO 
+
+#### Find the Network Interface Index:Get-NetAdapter.
+
+Open PowerShell as Administrator inside your Virtual Machine and run the following command to list your network adapters:
+
+```powershell
+Get-NetAdapter
+```
+
+Find the Network Interface Index:Get-NetAdapter.Open PowerShell as Administrator inside your Virtual Machine and run the following command to list your network adapters:PowerShellGet-NetAdapter
+Verification: Note the number in the ifIndex column for your active adapter (usually named "Ethernet"). You will need this number for the next steps.
+
+<pre>
+Name                      InterfaceDescription                    ifIndex Status       MacAddress
+----                      --------------------                    ------- ------       ----------
+Ethernet                  Microsoft Hyper-V Network Adapter             6 Up           00-15-5D-01-08-20
+</pre>
+
+
+
+#### Assign the Static IP and Gateway New-NetIPAddress 
+
+Use the ifIndex number from the previous step. In this example, we will use index 12, assign the IP 192.168.1.101, a subnet mask of 255.255.255.0 (which is a PrefixLength of 24), and a gateway of 192.168.1.1. Modify these numbers to match your network.
+
+```powershell
+New-NetIPAddress -InterfaceIndex 6 -IPAddress 192.168.1.101 -PrefixLength 24 -DefaultGateway 192.168.1.1
+```
+
+
+Verification: The console will output a table showing the newly assigned IPv4 address and its status.
+
+
+
+### Assign the DNS Servers:Set-DnsClientServerAddress.Next
+You must define the DNS servers. Because you previously set up this VM as a Domain Controller, its primary DNS must point to itself (127.0.0.1), and the secondary can point to an external resolver (like your router or 8.8.8.8) for internet access.
+
+```powershell
+Set-DnsClientServerAddress -InterfaceIndex 6 -ServerAddresses ("127.0.0.1", "8.8.8.8")
+```
+
+
+
+
+
+NEXT Approach
+
+
+
+Find your Interface Index
+Launch PowerShell from the Server Core command prompt by typing powershell and pressing Enter. Then, list your network adapters:
+
+```powershell
+Get-NetAdapter
+```
+
+<pre>
+Name                      InterfaceDescription                    ifIndex Status       MacAddress             LinkSpeed
+----                      --------------------                    ------- ------       ----------             ---------
+Ethernet                  Microsoft Hyper-V Network Adapter             6 Up           00-15-5D-01-08-20        10 Gbps
+</pre>
+
+Disable DHCP on the interface
+Run this command to turn off automatic IP assignment for IPv4 on Interface 12:
+
+```powershell
+Set-NetIPInterface -InterfaceIndex 6 -Dhcp Disabled
+```
+Remove the existing IP address (Recommended)
+To prevent conflicts with the old automatically assigned IP, clear it out. The -Confirm:$false flag stops it from prompting you for confirmation:
+
+
+```powershell
+Remove-NetIPAddress -InterfaceIndex 6 -AddressFamily IPv4 -Confirm:$false
+```
+(Note: If you are connected remotely, this step will disconnect you. Reconnect using the Hyper-V console.)
+
+```powershell
+Remove-NetRoute -InterfaceIndex 6 -DestinationPrefix "0.0.0.0/0" -Confirm:$false
+```
+
+Wipe out the partially configured IPv4 addresses on Interface 12 so you can start with a clean slate.
+
+```powershell
+Remove-NetIPAddress -InterfaceIndex 6 -AddressFamily IPv4 -Confirm:$false
+```
+
+```powershell
+Remove-NetRoute -InterfaceIndex 6 -DestinationPrefix "0.0.0.0/0" -Confirm:$false
+```
+Assign your static IP
+Now you can safely run your original command. Assuming your subnet mask is /24 (255.255.255.0) and your gateway is 192.168.1.1, the syntax is:
+
+```powershell
+New-NetIPAddress -InterfaceIndex 6 -IPAddress 192.168.1.101 -PrefixLength 24 -DefaultGateway 192.168.1.1
+```
+Set your DNS Servers
+Disabling DHCP also stops the adapter from pulling DNS servers automatically. You must set those manually so the server can resolve domain names:
+
+```powershell
+Set-DnsClientServerAddress -InterfaceIndex 6 -ServerAddresses ("8.8.8.8", "192.168.1.1")
+```
+
+Verification: Run Get-NetIPConfiguration -InterfaceIndex 6 to confirm the new static IP, gateway, and DNS servers are applied correctly without errors.
+
+
+
+Look for your active adapter (usually named "Ethernet") and note the number in the ifIndex column (for example, 3).
