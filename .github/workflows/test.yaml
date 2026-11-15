@@ -14,18 +14,24 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: '1.27'
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v8
-      with:
-        args: --timeout=3m
-        version: v2.15.0
-        skip-cache: true
-        skip-save-cache: true
-        cache-invalidation-interval: 15
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27'
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          args: --timeout=3m
+          version: v2.15.0
+          skip-cache: true
+          skip-save-cache: true
+          cache-invalidation-interval: 15
+      # TODO:
+      #  - codecov (ideally with PR comment)
+      #  - run `make test`
+      #  - `make generate` & make sure there is no diff
+
+      #  - vulnerability scanner?
 
   tests:
     runs-on: ubuntu-latest

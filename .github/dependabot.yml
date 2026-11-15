@@ -21,12 +21,4 @@ updates:
         patterns:
           - '*'
     open-pull-requests-limit: 3
-
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker:
-        patterns:
-          - '*'    
+    
