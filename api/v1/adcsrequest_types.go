@@ -100,7 +100,3 @@ type AdcsRequestList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []AdcsRequest `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&AdcsRequest{}, &AdcsRequestList{})
-}

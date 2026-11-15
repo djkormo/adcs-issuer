@@ -141,7 +141,7 @@ func TestNtlmRequestCertificate(t *testing.T) {
 		s := newNtlmCertsrv(server.URL, server.Client())
 		_, _, _, err := s.RequestCertificate("csr", "template")
 		assert.Error(t, err)
-		assert.EqualError(t, err, "Unknown error occured")
+		assert.EqualError(t, err, "Unknown error occurred")
 	})
 }
 
@@ -235,7 +235,7 @@ func TestNtlmGetExistingCertificate(t *testing.T) {
 		assert.Contains(t, err.Error(), "unexpected content type")
 	})
 
-	t.Run("non-200 status panics on nil error dereference", func(t *testing.T) {
+	t.Run("non-200 status returns an error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte("boom"))
@@ -329,9 +329,9 @@ func TestNtlmObtainCaCertificate(t *testing.T) {
 		defer server.Close()
 
 		s := newNtlmCertsrv(server.URL, server.Client())
-		assert.Panics(t, func() {
-			_, _ = s.GetCaCertificate()
-		})
+		_, err := s.GetCaCertificate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "500 Internal Server Error")
 	})
 }
 
@@ -365,13 +365,13 @@ func TestNtlmVerifyNtlm(t *testing.T) {
 
 func TestNewNtlmCertsrv(t *testing.T) {
 	t.Run("verify false with credentials set", func(t *testing.T) {
-		c, err := NewNtlmCertsrv("http://example.invalid", "user", "pass", nil, false)
+		c, err := NewNtlmCertsrv("http://example.invalid", "user", "pass", nil, false, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 	})
 
 	t.Run("verify false with credentials empty", func(t *testing.T) {
-		c, err := NewNtlmCertsrv("http://example.invalid", "", "", nil, false)
+		c, err := NewNtlmCertsrv("http://example.invalid", "", "", nil, false, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 	})
@@ -382,7 +382,7 @@ func TestNewNtlmCertsrv(t *testing.T) {
 		}))
 		defer server.Close()
 
-		c, err := NewNtlmCertsrv(server.URL, "", "", nil, true)
+		c, err := NewNtlmCertsrv(server.URL, "", "", nil, true, true)
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 	})

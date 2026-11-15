@@ -44,7 +44,6 @@ func (f *IssuerFactory) GetIssuer(ctx context.Context, ref cmmeta.ObjectReferenc
 
 // Get AdcsIssuer object from K8s and create Issuer
 func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey) (*Issuer, error) {
-
 	log := ctrl.LoggerFrom(ctx, "AdcsIssuer", key)
 
 	issuer := new(api.AdcsIssuer)
@@ -58,9 +57,20 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 		return nil, pwError
 	}
 
-	certs := issuer.Spec.CABundle
+	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.Name, issuer.Namespace)
+	if err != nil {
+		certs = []byte{}
+	}
+	if len(certs) == 0 {
+		certs = issuer.Spec.CABundle
+	}
 	if len(certs) == 0 {
 		return nil, fmt.Errorf("CA Bundle required")
+	}
+
+	insecureSkipVerify := false
+	if issuer.Spec.InsecureSkipVerify != nil {
+		insecureSkipVerify = *issuer.Spec.InsecureSkipVerify
 	}
 
 	caCertPool := x509.NewCertPool()
@@ -68,7 +78,6 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 	if !ok {
 		return nil, fmt.Errorf("error loading ADCS CA bundle")
 	}
-
 	authMode := os.Getenv("ADCS_AUTH_MODE")
 	var (
 		certServ adcs.AdcsCertsrv
@@ -77,9 +86,9 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 
 	// Choose method based on env
 	if authMode == "kerberos" {
-		certServ, adcsErr = adcs.NewKerberosCertsrv(issuer.Spec.URL, username, realm, password, caCertPool, false)
+		certServ, adcsErr = adcs.NewKerberosCertsrv(issuer.Spec.URL, username, realm, password, caCertPool, false, insecureSkipVerify)
 	} else { // default is ntlm
-		certServ, adcsErr = adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
+		certServ, adcsErr = adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false, insecureSkipVerify)
 	}
 	if adcsErr != nil {
 		return nil, adcsErr
@@ -122,9 +131,20 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		return nil, pwError
 	}
 
-	certs := issuer.Spec.CABundle
+	certs, err := f.getCaBundle(ctx, issuer.Spec.CABundleRef.Name, f.ClusterResourceNamespace)
+	if err != nil {
+		certs = []byte{}
+	}
+	if len(certs) == 0 {
+		certs = issuer.Spec.CABundle
+	}
 	if len(certs) == 0 {
 		return nil, fmt.Errorf("CA Bundle required")
+	}
+
+	insecureSkipVerify := false
+	if issuer.Spec.InsecureSkipVerify != nil {
+		insecureSkipVerify = *issuer.Spec.InsecureSkipVerify
 	}
 
 	caCertPool := x509.NewCertPool()
@@ -132,7 +152,6 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 	if !ok {
 		return nil, fmt.Errorf("error loading ADCS CA bundle")
 	}
-
 	authMode := os.Getenv("ADCS_AUTH_MODE")
 	var (
 		certServ adcs.AdcsCertsrv
@@ -141,9 +160,9 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 
 	// Choose method based on env
 	if authMode == "kerberos" {
-		certServ, adcsErr = adcs.NewKerberosCertsrv(issuer.Spec.URL, username, realm, password, caCertPool, false)
+		certServ, adcsErr = adcs.NewKerberosCertsrv(issuer.Spec.URL, username, realm, password, caCertPool, false, insecureSkipVerify)
 	} else { // default is ntlm
-		certServ, adcsErr = adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false)
+		certServ, adcsErr = adcs.NewNtlmCertsrv(issuer.Spec.URL, username, password, caCertPool, false, insecureSkipVerify)
 	}
 	if adcsErr != nil {
 		return nil, adcsErr
@@ -205,4 +224,16 @@ func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, 
 	}
 
 	return string(secret.Data["username"]), string(secret.Data["password"]), string(secret.Data["realm"]), nil
+}
+
+func (f *IssuerFactory) getCaBundle(ctx context.Context, secretName string, namespace string) ([]byte, error) {
+	secret := new(corev1.Secret)
+	if err := f.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
+		return []byte{}, err
+	}
+	if _, ok := secret.Data["ca.crt"]; !ok {
+		return []byte{}, fmt.Errorf("ca.crt not set in secret")
+	}
+
+	return secret.Data["ca.crt"], nil
 }

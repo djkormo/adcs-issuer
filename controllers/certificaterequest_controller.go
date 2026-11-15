@@ -15,22 +15,20 @@ import (
 	core "k8s.io/api/core/v1"
 	apimacherrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/klog"
+	"sigs.k8s.io/controller-runtime/pkg/recorder"
 )
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
 type CertificateRequestReconciler struct {
 	client.Client
-	Recorder record.EventRecorder
+	Recorder recorder.EventRecorder
 
 	Clock                  clock.Clock
 	CheckApprovedCondition bool
 }
 
-var (
-	certificateRequestGvk = cmapi.SchemeGroupVersion.WithKind("CertificateRequest")
-)
+var certificateRequestGvk = cmapi.SchemeGroupVersion.WithKind("CertificateRequest")
 
 // +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests/status;certificates/finalizers;certificaterequests/finalizers,verbs=get;update;patch
@@ -163,12 +161,10 @@ func (r *CertificateRequestReconciler) createAdcsRequest(ctx context.Context, cm
 		IssuerRef: cmRequest.Spec.IssuerRef,
 	}
 	return r.Create(ctx, &api.AdcsRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            cmRequest.Name,
-			Namespace:       cmRequest.Namespace,
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(cmRequest, certificateRequestGvk)},
-		},
-		Spec: spec,
+		Name:            cmRequest.Name,
+		Namespace:       cmRequest.Namespace,
+		OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(cmRequest, certificateRequestGvk)},
+		Spec:            spec,
 	})
 }
 
@@ -204,7 +200,7 @@ func (r *CertificateRequestReconciler) GetCertificateRequest(ctx context.Context
 	return *cr, nil
 }
 
-func (r *CertificateRequestReconciler) SetStatus(ctx context.Context, cr *cmapi.CertificateRequest, status cmmeta.ConditionStatus, reason, message string, args ...interface{}) error {
+func (r *CertificateRequestReconciler) SetStatus(ctx context.Context, cr *cmapi.CertificateRequest, status cmmeta.ConditionStatus, reason, message string, args ...any) error {
 	completeMessage := fmt.Sprintf(message, args...)
 	cmapiutil.SetCertificateRequestCondition(cr, cmapi.CertificateRequestConditionReady, status, reason, completeMessage)
 
@@ -213,7 +209,7 @@ func (r *CertificateRequestReconciler) SetStatus(ctx context.Context, cr *cmapi.
 	if status == cmmeta.ConditionFalse {
 		eventType = core.EventTypeWarning
 	}
-	r.Recorder.Event(cr, eventType, reason, completeMessage)
+	r.Recorder.Eventf(cr, nil, eventType, reason, "Reconcile", completeMessage)
 
 	return r.Status().Update(ctx, cr)
 }

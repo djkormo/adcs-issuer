@@ -15,7 +15,7 @@ BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 PROJECT?=github.com/djkormo/adcs-issuer
 
 # Trivy severity level and output format
-TRIVY_SEVERITY ?= CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN
+TRIVY_SEVERITY ?= CRITICAL,HIGH,MEDIUM,LOW #,UNKNOWN
 TRIVY_FORMAT ?= table
 
 

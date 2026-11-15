@@ -6,9 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -24,7 +22,7 @@ func adcsIssuerScheme(t *testing.T) *runtime.Scheme {
 func TestAdcsIssuerReconcile_Found(t *testing.T) {
 	// arrange
 	issuer := &adcsv1.AdcsIssuer{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-issuer", Namespace: "default"},
+		Name: "my-issuer", Namespace: "default",
 	}
 	fakeClient := fake.NewClientBuilder().
 		WithScheme(adcsIssuerScheme(t)).
@@ -38,7 +36,7 @@ func TestAdcsIssuerReconcile_Found(t *testing.T) {
 
 	// act
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "my-issuer"},
+		Namespace: "default", Name: "my-issuer",
 	})
 
 	// assert
@@ -59,7 +57,7 @@ func TestAdcsIssuerReconcile_NotFound(t *testing.T) {
 
 	// act
 	res, err := r.Reconcile(context.Background(), ctrl.Request{
-		NamespacedName: types.NamespacedName{Namespace: "default", Name: "missing-issuer"},
+		Namespace: "default", Name: "missing-issuer",
 	})
 
 	// assert

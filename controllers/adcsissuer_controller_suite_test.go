@@ -52,7 +52,7 @@ var _ = Describe("SetupWithManager", func() {
 
 		certReconciler := &CertificateRequestReconciler{
 			Client:   mgr.GetClient(),
-			Recorder: mgr.GetEventRecorderFor("adcs-certificaterequests-controller"),
+			Recorder: mgr.GetEventRecorder("adcs-certificaterequests-controller"),
 			Clock:    clock.RealClock{},
 		}
 		err = certReconciler.SetupWithManager(mgr)
@@ -65,7 +65,7 @@ var _ = Describe("SetupWithManager", func() {
 
 		certReconciler := &CertificateRequestReconciler{
 			Client:   mgr.GetClient(),
-			Recorder: mgr.GetEventRecorderFor("adcs-certificaterequests-controller"),
+			Recorder: mgr.GetEventRecorder("adcs-certificaterequests-controller"),
 			Clock:    clock.RealClock{},
 		}
 
@@ -76,7 +76,7 @@ var _ = Describe("SetupWithManager", func() {
 				Client:           mgr.GetClient(),
 				AdcsTemplateName: "test",
 			},
-			Recorder:                     mgr.GetEventRecorderFor("adcs-requests-controller"),
+			Recorder:                     mgr.GetEventRecorder("adcs-requests-controller"),
 			CertificateRequestController: certReconciler,
 		}).SetupWithManager(mgr)
 		Expect(err).NotTo(HaveOccurred())

@@ -20,10 +20,16 @@ type ClusterAdcsIssuerSpec struct {
 	// The secret must contain two keys, 'username' and 'password'.
 	CredentialsRef LocalObjectReference `json:"credentialsRef"`
 
-	// CABundle is a PEM encoded TLS certifiate to use to verify connections to
+	// CABundle is a PEM encoded TLS certificate to use to verify connections to
 	// the ADCS server.
 	// +optional
 	CABundle []byte `json:"caBundle,omitempty"`
+
+	// CABundleRef is a reference to a Secret containing the ca bundle of the
+	// ca for the ADCS server.
+	// The secret must contain 'ca.crt' key
+	// +optional
+	CABundleRef LocalObjectReference `json:"caBundleRef,omitempty"`
 
 	// How often to check for request status in the server (in time.ParseDuration() format)
 	// Default 6 hours.
@@ -39,6 +45,14 @@ type ClusterAdcsIssuerSpec struct {
 	// Defaults to the what is specified in main.go or as an cli option.
 	// +optional
 	TemplateName string `json:"templateName,omitempty"`
+
+	// InsecureSkipVerify controls whether a client verifies the server's certificate chain and host name.
+	// If InsecureSkipVerify is true, crypto/tls accepts any certificate presented by the server.
+	// In this mode, TLS is susceptible to machine-in-the-middle attacks unless custom verification is used.
+	// This should be used only for testing or in combination with VerifyConnection or VerifyPeerCertificate.
+	// Default: false
+	// +optional
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // ClusterAdcsIssuerStatus defines the observed state of ClusterAdcsIssuer
@@ -67,8 +81,4 @@ type ClusterAdcsIssuerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ClusterAdcsIssuer `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&ClusterAdcsIssuer{}, &ClusterAdcsIssuerList{})
 }

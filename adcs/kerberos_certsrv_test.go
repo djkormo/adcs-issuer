@@ -358,7 +358,7 @@ func TestNewKerberosCertsrv(t *testing.T) {
 		// /etc/krb5.conf is very unlikely to exist in this sandbox, so
 		// config.Load should fail and NewKerberosCertsrv should surface
 		// that error without attempting any login or network activity.
-		c, err := NewKerberosCertsrv("http://example.invalid", "user", "REALM", "pass", nil, false)
+		c, err := NewKerberosCertsrv("http://example.invalid", "user", "REALM", "pass", nil, false, false)
 		assert.Error(t, err)
 		assert.Nil(t, c)
 	})
