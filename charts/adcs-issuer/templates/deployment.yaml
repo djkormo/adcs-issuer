@@ -133,6 +133,9 @@ spec:
           secret:
             defaultMode: 420
             secretName: {{ .Values.controllerManager.caCertsSecretName | default "ca-certificates" }}
+            items:
+              - key: {{ .Values.controllerManager.caCertsSecretKey | default "ca-certificates.crt" }} 
+                path: ca-certificates.crt
         {{- end }}
         {{- if .Values.controllerManager.kerberosAuthentication.enabled }}
         - name: krb5-config
