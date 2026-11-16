@@ -1,10 +1,10 @@
 # ADCS Issuer
 
-ADCS Issuer is a [cert-manager's](https://github.com/jetstack/cert-manager) CertificateRequest controller that uses MS Active Directory Certificate Service to sign certificates 
-(see [this design document](https://github.com/jetstack/cert-manager/blob/master/design/20190708.certificate-request-crd.md) for details on CertificateRequest CRD). 
+ADCS Issuer is a [cert-manager's](https://github.com/jetstack/cert-manager) CertificateRequest controller that uses MS Active Directory Certificate Service to sign certificates
+(see [this design document](https://github.com/jetstack/cert-manager/blob/master/design/20190708.certificate-request-crd.md) for details on CertificateRequest CRD).
 
-ADCS provides HTTP GUI that can be normally used to request new certificates or see status of existing requests. 
-This implementation is simply a HTTP client that interacts with the ADCS server sending appropriately prepared HTTP requests and interpretting the server's HTTP responses
+ADCS provides HTTP GUI that can be normally used to request new certificates or see status of existing requests.
+This implementation is simply a HTTP client that interacts with the ADCS server sending appropriately prepared HTTP requests and interpreting the server's HTTP responses
 (the approach inspired by [this Python ADCS client](https://github.com/magnuswatn/certsrv)).
 
 It supports NTLM authentication.
@@ -27,7 +27,7 @@ Build statuses:
 
 
 
-## Current documentation for this issuer 
+## Current documentation for this issuer
 
 ===========================
 
@@ -70,6 +70,47 @@ spec:
 
 The `caBundle` parameter is BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
 
+Alternatively, `caBundleRef` selects a PEM-encoded CA bundle from a Secret or ConfigMap. Only `name` is required when using `caBundleRef`.
+
+| Field | Default | Description |
+| --- | --- | --- |
+| `name` | Required | Name of the Secret or ConfigMap. |
+| `kind` | `Secret` | Either `Secret` or `ConfigMap`. |
+| `key` | `ca.crt` | Key containing the PEM-encoded CA bundle. |
+| `namespace` | Configured cluster resource namespace | **`ClusterAdcsIssuer` only.** Defaults to `--cluster-resource-namespace`: `kube-system` for the binary, or `adcs-issuer` with the default Helm values (`controllerManager.arguments.cluster-resource-namespace`). |
+
+For `AdcsIssuer`, the referenced resource must be in the same namespace as the `AdcsIssuer` resource; `caBundleRef.namespace` is not supported. This is not necessarily the namespace where the controller is deployed.
+
+A name-only reference continues to use a Secret's `ca.crt` key:
+
+```yaml
+spec:
+  caBundleRef:
+    name: adcs-ca
+```
+
+For a custom ConfigMap key, use `kind: ConfigMap` and `key: bundle.pem`. A `ClusterAdcsIssuer` can additionally select another namespace:
+
+```yaml
+apiVersion: adcs.certmanager.csf.nokia.com/v1
+kind: ClusterAdcsIssuer
+metadata:
+  name: test-adcs
+spec:
+  caBundleRef:
+    name: adcs-ca
+    kind: ConfigMap
+    key: bundle.pem
+    namespace: shared-trust
+  credentialsRef:
+    name: test-adcs-issuer-credentials
+  url: https://adcs.example.com
+```
+
+Secret `data` values are base64-encoded in YAML; Secret `stringData` and ConfigMap `data` values contain plain PEM text. ConfigMap `binaryData` is also supported. The controller must have read access to the referenced resource.
+
+The referenced bundle takes precedence over inline `caBundle`. If the resource or key cannot be loaded or is empty, the controller logs the error and uses inline `caBundle` when provided; otherwise, it returns the lookup error. If neither a reference nor an inline bundle is configured, issuer creation fails.
+
 The `statusCheckInterval` indicates how often the status of the request should be tested. Typically, it can take a few hours or even days before the certificate is issued.
 
 The `retryInterval` says how long to wait before retrying requests that errored.
@@ -105,7 +146,7 @@ spec:
   templateName: <adcs-template-name>
 ```
 
-The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), must be defined in the namespace where the controller's pod is running, or in the namespace specified by the flag  `-clusterResourceNamespace` (default: `kube-system`).
+The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`) must be defined in the namespace specified by `--cluster-resource-namespace` (default: `kube-system` for the binary; `adcs-issuer` with the default Helm values). This namespace is also the default for `caBundleRef.namespace`. An explicit `caBundleRef.namespace` changes only the CA bundle lookup, not the credentials lookup.
 
 ### Requesting certificates
 
@@ -141,7 +182,7 @@ The `AdcsRequest` object stores the ID of request assigned by the ADCS server as
 * **Pending** - the request has been sent to ADCS and is waiting for acceptance (status will be checked periodically),
 * **Ready** - the request has been successfully processed and the certificate is ready and stored in secret defined in the original `Certificate` object,
 * **Rejected** - the request was rejected by ADCS and will be re-tried unless the `Certificate` is updated,
-* **Errored**  - unrecoverable problem occured.
+* **Errored**  - unrecoverable problem occurred.
 
 
 ```
@@ -192,7 +233,7 @@ spec:
 
 ## Installation
 
-This controller is implemented using [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). Automatically generated Makefile contains targets needed for build and installation. 
+This controller is implemented using [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). Automatically generated Makefile contains targets needed for build and installation.
 Generated CRD manifests are stored in `config/crd`. RBAC roles and bindings can be found in config/rbac. There's also a Make target to build controller's Docker image and
 store it in local docker repo (Docker must be installed).
 
@@ -212,9 +253,9 @@ the Issuer Deployment.
 ### ADCS Simulator
 The test/adcs-sim directory contains a simple ADCS simulator that can be used for basic tests
 (see `make sim`).
- 
+
 The simulator can be started on the host and work ad ADCS server that will sign certificates using provided
-self-signed certificate and key (`root.pem` and `root.key` files). 
+self-signed certificate and key (`root.pem` and `root.key` files).
 If needed the certificate can be replaced with any other available.
 
 The simulator accepts directives to control its behavior. The directives are set as additional domain names in the certificate request:
@@ -230,12 +271,12 @@ More then one directive can be used at a time. e.g. to simulate rejecting the ce
 ```
 
 ## Open issues
- 
-* Cert-manger limits the identity of the requestor to Organization and CommonName. 
-  Full X509 Distinguished Name support is needed. 
+
+* Cert-manger limits the identity of the requester to Organization and CommonName.
+  Full X509 Distinguished Name support is needed.
   See: [Full X509 Distinguished Name support](https://github.com/jetstack/cert-manager/issues/2288)
-* When request is rejected by ADCS because of invalid data then there's a problem to indicate in CertificateReuqest 
-  that it should not be re-tried. 
+* When request is rejected by ADCS because of invalid data then there's a problem to indicate in CertificateReuqest
+  that it should not be re-tried.
   See: [Problem with automatic retry of failed requests](https://github.com/jetstack/cert-manager/issues/2289)
 
 ## ToDos
@@ -248,7 +289,7 @@ More then one directive can be used at a time. e.g. to simulate rejecting the ce
 
 Unfortunately, there are no web services available for ADCS management only a DCOM interface [MS-CSRA](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-csra/40e74714-14bf-4f97-a264-35efbd63a813).
 
-(there are SOAP-based web services for certificate enrollment: [MS-XCEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-xcep/08ec4475-32c2-457d-8c27-5a176660a210) 
+(there are SOAP-based web services for certificate enrollment: [MS-XCEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-xcep/08ec4475-32c2-457d-8c27-5a176660a210)
 and [MS-WSTEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wstep/4766a85d-0d18-4fa1-a51f-e5cb98b752ea))
 
 
@@ -256,7 +297,7 @@ and [MS-WSTEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-w
 ### Locally operations
 
 
-#### Installing cert manager 
+#### Installing cert manager
 
 ```
 
@@ -272,13 +313,13 @@ kustomize build config/crd > template.yaml
 echo "---" >> template.yaml
 kustomize build config/default >> template.yaml
 
-make dry-run 
+make dry-run
 
 cat all-manifests.yaml | kubectl split-yaml -t "{{.kind}}/{{.name}}.yaml" -p manifests
 
 kubectl apply -R -f manifests -n cert-manager
 
-kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
+kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager
 
 make build IMG="docker.io/djkormo/adcs-issuer:dev"
 
@@ -310,7 +351,7 @@ helm template charts/adcs-issuer -n cert-manager --values charts/adcs-issuer/val
 
 helm template charts/adcs-issuer -n adcs-issuer --values charts/adcs-issuer/values.yaml > adcs-issuer-all.yaml
 
-kubectl -n cert-manager apply -f adcs-issuer-all.yaml 
+kubectl -n cert-manager apply -f adcs-issuer-all.yaml
 
 kubectl -n cert-manager rollout restart deploy adcs-issuer-controller-manager
 

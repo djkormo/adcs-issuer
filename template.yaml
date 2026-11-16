@@ -42,8 +42,30 @@ spec:
           spec:
             description: AdcsIssuerSpec defines the desired state of AdcsIssuer
             properties:
+              caBundleRef:
+                description: |-
+                  CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+                  Takes precedence over caBundle when the referenced bundle is available.
+                properties:
+                  key:
+                    description: Key containing the PEM encoded CA bundle. Defaults
+                      to ca.crt.
+                    type: string
+                  kind:
+                    description: Kind of the referent. Defaults to Secret.
+                    enum:
+                    - Secret
+                    - ConfigMap
+                    type: string
+                  name:
+                    description: Name of the referent.
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
               caBundle:
-                description: CABundle is a PEM encoded TLS certifiate to use to verify
+                description: CABundle is a PEM encoded TLS certificate to use to verify
                   connections to the ADCS server.
                 format: byte
                 type: string
@@ -248,8 +270,35 @@ spec:
           spec:
             description: ClusterAdcsIssuerSpec defines the desired state of ClusterAdcsIssuer
             properties:
+              caBundleRef:
+                description: |-
+                  CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+                  Takes precedence over caBundle when the referenced bundle is available.
+                properties:
+                  key:
+                    description: Key containing the PEM encoded CA bundle. Defaults
+                      to ca.crt.
+                    type: string
+                  kind:
+                    description: Kind of the referent. Defaults to Secret.
+                    enum:
+                    - Secret
+                    - ConfigMap
+                    type: string
+                  name:
+                    description: Name of the referent.
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace of the referent. Defaults to --cluster-resource-namespace
+                      (kube-system unless configured otherwise).
+                    type: string
+                required:
+                - name
+                type: object
               caBundle:
-                description: CABundle is a PEM encoded TLS certifiate to use to verify
+                description: CABundle is a PEM encoded TLS certificate to use to verify
                   connections to the ADCS server.
                 format: byte
                 type: string
@@ -349,8 +398,30 @@ spec:
           spec:
             description: AdcsIssuerSpec defines the desired state of AdcsIssuer
             properties:
+              caBundleRef:
+                description: |-
+                  CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+                  Takes precedence over caBundle when the referenced bundle is available.
+                properties:
+                  key:
+                    description: Key containing the PEM encoded CA bundle. Defaults
+                      to ca.crt.
+                    type: string
+                  kind:
+                    description: Kind of the referent. Defaults to Secret.
+                    enum:
+                    - Secret
+                    - ConfigMap
+                    type: string
+                  name:
+                    description: Name of the referent.
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
               caBundle:
-                description: CABundle is a PEM encoded TLS certifiate to use to verify
+                description: CABundle is a PEM encoded TLS certificate to use to verify
                   connections to the ADCS server.
                 format: byte
                 type: string
@@ -555,8 +626,35 @@ spec:
           spec:
             description: ClusterAdcsIssuerSpec defines the desired state of ClusterAdcsIssuer
             properties:
+              caBundleRef:
+                description: |-
+                  CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+                  Takes precedence over caBundle when the referenced bundle is available.
+                properties:
+                  key:
+                    description: Key containing the PEM encoded CA bundle. Defaults
+                      to ca.crt.
+                    type: string
+                  kind:
+                    description: Kind of the referent. Defaults to Secret.
+                    enum:
+                    - Secret
+                    - ConfigMap
+                    type: string
+                  name:
+                    description: Name of the referent.
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace of the referent. Defaults to --cluster-resource-namespace
+                      (kube-system unless configured otherwise).
+                    type: string
+                required:
+                - name
+                type: object
               caBundle:
-                description: CABundle is a PEM encoded TLS certifiate to use to verify
+                description: CABundle is a PEM encoded TLS certificate to use to verify
                   connections to the ADCS server.
                 format: byte
                 type: string
@@ -677,6 +775,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
   - secrets
   verbs:
   - get

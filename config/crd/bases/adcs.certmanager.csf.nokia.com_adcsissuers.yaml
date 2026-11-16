@@ -41,10 +41,32 @@ spec:
             properties:
               caBundle:
                 description: |-
-                  CABundle is a PEM encoded TLS certifiate to use to verify connections to
+                  CABundle is a PEM encoded TLS certificate to use to verify connections to
                   the ADCS server.
                 format: byte
                 type: string
+              caBundleRef:
+                description: |-
+                  CABundleRef references a Secret or ConfigMap containing the ADCS server's CA bundle.
+                  Takes precedence over caBundle when the referenced bundle is available.
+                properties:
+                  key:
+                    description: Key containing the PEM encoded CA bundle. Defaults
+                      to ca.crt.
+                    type: string
+                  kind:
+                    description: Kind of the referent. Defaults to Secret.
+                    enum:
+                    - Secret
+                    - ConfigMap
+                    type: string
+                  name:
+                    description: Name of the referent.
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
               credentialsRef:
                 description: |-
                   CredentialsRef is a reference to a Secret containing the username and

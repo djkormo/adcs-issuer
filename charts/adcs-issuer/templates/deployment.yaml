@@ -30,6 +30,10 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
       {{- end }}
 
+      {{- if .Values.controllerManager.priorityClassName }}
+      priorityClassName: {{ .Values.controllerManager.priorityClassName | quote }}
+      {{- end }}
+
       {{- if .Values.controllerManager.nodeAffinity }}
       affinity:
         nodeAffinity:
