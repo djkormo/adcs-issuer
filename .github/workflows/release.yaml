@@ -40,7 +40,7 @@ jobs:
       #    1. compile the binaries
       #    2. create & push the docker image using `ko`
       #    3. create a GitHub release
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           version: '~> v2'
           args: --clean
